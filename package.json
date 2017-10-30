@@ -1,0 +1,14 @@
+{
+  "name": "Synthereum-Web-Server",
+  "version": "0.0.1",
+  "main": "app.js",
+  "license": "UNLICENSED",
+  "description": "Description",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/luudvkeulen/Synthereum-Web-Server.git"
+  },
+  "dependencies": {
+    "express": "^4.16.2"
+  }
+}
