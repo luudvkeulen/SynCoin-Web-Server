@@ -20,27 +20,23 @@ class SynCoinService {
     createWallet(password) {
         // TODO: Enforce password requirements here?
 
-        // Create encrypted account
+        // Create account
         let account = this.web3.eth.accounts.create();
         let encryptedAccount = account.encrypt(password);
 
         // Create and deploy contract
-        let walletCreationData = new this.web3.eth.Contract(walletContractAbi, null)
-            .deploy({
-                data: walletContractData
-            })
-            .encodeABI();
-
-        // TODO: Can't create a wallet if you haven't got any money...
+        let walletCreationData = new this.web3.eth.Contract(walletContractAbi, null, {
+            data: walletContractData
+        }).deploy().encodeABI();
 
         // Sign contract creation with created account
         this.web3.eth.accounts.signTransaction({
-            "data": walletCreationData,
-            "gasPrice": 0,
-            "gas": 200000,
+            data: walletCreationData,
+            from: account.address,
+            gasPrice: 0,
+            gas: 200000
         }, account.privateKey).then((signedTransaction) => {
-            this.web3.eth.sendSignedTransaction(signedTransaction.rawTransaction)
-                .then(console.log);
+            this.web3.eth.sendSignedTransaction(signedTransaction.rawTransaction).then(console.log);
         });
 
         return {
