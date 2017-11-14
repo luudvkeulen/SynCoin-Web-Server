@@ -17,6 +17,7 @@ mongoose.connect(`mongodb://${process.env.DB_HOST}:${process.env.DB_PORT}/${proc
     .then(() => console.log('MongoDB: connected'))
     .catch(error => console.log('MongoDB: error while connecting ', error));
 
+// Middleware
 app.use(bodyParser.json());
 app.use((req, res, next) => {
     // Inject SynCoinService instance so the same instance is used in all requests.
@@ -27,4 +28,4 @@ app.use(routes);
 
 app.get('/', (req, res) => res.send("Hello"));
 
-app.listen(PORT, () => console.log('Listening on port ', PORT));
+app.listen(PORT, () => console.log(`Server: Listening on port ${PORT}`));
