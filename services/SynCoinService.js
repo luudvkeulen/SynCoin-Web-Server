@@ -32,6 +32,11 @@ SynCoinApi.prototype.createWallet = function(password) {
     };
 };
 
+SynCoinApi.prototype.sendTransaction = function(walletAddress, password, toAddress, amount){ //todo: dit
+    let contract = web3.eth.contract(walletContractAbi).at(walletAddress);
+    contract.methods.send(toAddress, amount);
+}
+
 //console.log(decryptAccount(this.web3, encryptedAccount, password));
 
 module.exports = SynCoinApi;
