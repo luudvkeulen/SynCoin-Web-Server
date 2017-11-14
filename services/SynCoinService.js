@@ -6,32 +6,60 @@ const walletContractAbi = [{"constant":false,"inputs":[{"name":"receiver","type"
 const walletContractData = "0x6060604052341561000f57600080fd5b336000806101000a81548173ffffffffffffffffffffffffffffffffffffffff021916908373ffffffffffffffffffffffffffffffffffffffff1602179055506102308061005e6000396000f300606060405260043610610041576000357c0100000000000000000000000000000000000000000000000000000000900463ffffffff168063d0679d34146100b8575b60003411156100b6577fea8894086f544a14fafefe000f478d734be3087de78435eb799669d5191a3acd3334604051808373ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff1681526020018281526020019250505060405180910390a15b005b34156100c357600080fd5b6100f8600480803573ffffffffffffffffffffffffffffffffffffffff169060200190919080359060200190919050506100fa565b005b6000809054906101000a900473ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff163373ffffffffffffffffffffffffffffffffffffffff1614151561015557600080fd5b8173ffffffffffffffffffffffffffffffffffffffff166108fc829081150290604051600060405180830381858888f19350505050151561019557600080fd5b7f4970bf8595442008a41b189fc026906b953e2a419e3029e6d0d6ce02a33ba85d8282604051808373ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff1681526020018281526020019250505060405180910390a150505600a165627a7a7230582045927a36f75e5f2722e42612eca63e7c3bd69b138baa3dcb0e84702c662595e90029";
 const web3Address = "ws://localhost:8546";
 
-function decryptAccount(web3, encryptedAccount, password) {
-    return web3.eth.accounts.decrypt(encryptedAccount, password);
+class SynCoinService {
+    constructor() {
+        this.web3 = new Web3(web3Address);
+    }
+
+    /**
+     * Creates an account (public-key pair) and a wallet from that account.
+     *
+     * @param password string
+     * @returns {{encryptedAccount: object, walletAddress: string}}
+     */
+    createWallet(password) {
+        // TODO: Enforce password requirements here?
+
+        // Create encrypted account
+        let encryptedAccount = this.web3.eth.accounts.create().encrypt(password);
+
+        // Create and deploy contract
+        let walletContract = new this.web3.eth.Contract(walletContractAbi, null)
+            .deploy({
+                data: walletContractData
+            });
+        // .send({
+        //     from: encryptedAccount.address,
+        //     gasPrice: 0
+        // });
+
+        // console.log(walletContract);
+
+        return {
+            encryptedAccount: encryptedAccount,
+            walletAddress: "not implemented"
+        };
+    }
+
+    /**
+     * Returns whether the password is valid for the given encrypted account (generated with createWallet())
+     *
+     * @param encryptedAccount object
+     * @param password string
+     */
+    verifyPassword(encryptedAccount, password) {
+        try {
+            this.web3.eth.accounts.decrypt(encryptedAccount, password);
+
+            return true;
+        } catch (error) {
+            if (error.message.toLowerCase().includes("wrong password")) {
+                return false
+            }
+
+            throw error;
+        }
+    }
 }
 
-function SynCoinApi() {
-    this.web3 = new Web3(web3Address);
-}
-
-// Returns {encryptedAccount: object, walletAddress: string}
-SynCoinApi.prototype.createWallet = function(password) {
-    // TODO: Enforce password requirements here?
-
-    console.info("Generating wallet...");
-
-    var encryptedAccount = this.web3.eth.accounts.create().encrypt(password);
-    console.info("Account (encrypted): ");
-    console.info(encryptedAccount);
-
-    // TODO: Deploy contract
-
-    return {
-        encryptedAccount: encryptedAccount,
-        walletAddress: "not implemented"
-    };
-};
-
-//console.log(decryptAccount(this.web3, encryptedAccount, password));
-
-module.exports = SynCoinApi;
+module.exports = SynCoinService;
