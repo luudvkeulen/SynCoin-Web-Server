@@ -15,7 +15,7 @@ class SynCoinService {
      * Creates an account (public-key pair) and a wallet from that account.
      *
      * @param password string
-     * @returns {{encryptedAccount: object, walletAddress: string}}
+     * @returns Promise|{{encryptedAccount: object, walletContract: object}}
      */
     createWallet(password) {
         // TODO: Enforce password requirements here?
@@ -25,24 +25,32 @@ class SynCoinService {
         let encryptedAccount = account.encrypt(password);
 
         // Create and deploy contract
-        let walletCreationData = new this.web3.eth.Contract(walletContractAbi, null, {
-            data: walletContractData
-        }).deploy().encodeABI();
+        let walletContract = new this.web3.eth.Contract(walletContractAbi);
 
-        // Sign contract creation with created account
-        this.web3.eth.accounts.signTransaction({
-            data: walletCreationData,
-            from: account.address,
-            gasPrice: 0,
-            gas: 200000
-        }, account.privateKey).then((signedTransaction) => {
-            this.web3.eth.sendSignedTransaction(signedTransaction.rawTransaction).then(console.log);
+        let walletCreationData = walletContract.deploy({
+            data: walletContractData,
+            arguments: []
+        }).encodeABI();
+
+        return new Promise((resolve, reject) => {
+            // Sign contract deployment transaction with created account
+            this.web3.eth.accounts.signTransaction({
+                data: walletCreationData,
+                gasPrice: 0,
+                gas: 200000
+            }, account.privateKey).then((signedTransaction) => {
+                // Commit the transaction and retrieve its address
+                this.web3.eth.sendSignedTransaction(signedTransaction.rawTransaction)
+                    .on("receipt", (receipt) => {
+                        walletContract.options.address = receipt.contractAddress;
+
+                        resolve({
+                            encryptedAccount: encryptedAccount,
+                            walletContract: walletContract
+                        });
+                    });
+            });
         });
-
-        return {
-            encryptedAccount: encryptedAccount,
-            walletAddress: "not implemented"
-        };
     }
 
     /**
@@ -72,6 +80,3 @@ class SynCoinService {
 }
 
 module.exports = SynCoinService;
-
-let service = new SynCoinService();
-service.createWallet("ljkljkljk");
