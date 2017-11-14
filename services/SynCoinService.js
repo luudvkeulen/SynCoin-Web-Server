@@ -60,6 +60,11 @@ class SynCoinService {
             throw error;
         }
     }
+
+    sendTransaction(walletAddress, password, toAddress, amount){ //todo: dit
+        let contract = web3.eth.contract(walletContractAbi).at(walletAddress);
+        contract.methods.send(toAddress, amount);
+    }
 }
 
 module.exports = SynCoinService;
