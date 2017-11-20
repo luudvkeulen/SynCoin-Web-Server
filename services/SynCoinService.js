@@ -136,6 +136,7 @@ class SynCoinService {
             orderContract.methods.order(reference)
                 .send({value: amount})
                 .then((receipt) => {
+                    // TODO: Check if true was returned instead of event
                     if (receipt.events.OrderCreated) {
                         resolve();
                     } else {
@@ -154,6 +155,7 @@ class SynCoinService {
             orderContract.methods.cancel(reference)
                 .send()
                 .then((receipt) => {
+                    // TODO: Check if true was returned instead of event
                     if (receipt.events.OrderCanceled) {
                         resolve();
                     } else {
