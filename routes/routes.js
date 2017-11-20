@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-
+const User = require('./../models/user');
 const Wallet = require('./../models/wallet');
 
 router.post('/login', (req, res) => {
@@ -12,9 +12,27 @@ router.post('/login', (req, res) => {
     // Wallet.findByEmailaddress().EncryptedAccount
     synCoinService.verifyPassword(encryptedAccount, password);
 
-    
-    
+
     res.sendStatus(200);
+});
+
+router.post('/register', (req, res) => {
+    let user = req.body;
+    console.log(user);
+
+    let newUser = User({
+        email: user.email,
+        surname: user.surname,
+        lastname: user.lastname,
+        phone: user.phone,
+        company: user.company,
+        address: user.address
+    });
+
+    newUser.save((err) => {
+        if(err) throw err;
+        return res.send("ok");
+    });
 });
 
 module.exports = router;
