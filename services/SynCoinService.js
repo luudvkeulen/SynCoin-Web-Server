@@ -103,6 +103,19 @@ class SynCoinService {
                 });
         });
     }
+
+    getTransactions(walletAddress, encryptedAccount, password){
+        let accountAddress = addAccountToInMemoryWallet(this.web3, encryptedAccount, password);
+        let walletContract = getWalletContract(this.web3, walletAddress, accountAddress);
+
+        return new Promise((resolve, reject) => {
+            walletContract.getPastEvents('allEvents', {fromBlock: 0, toBlock: 'latest'})
+            .then(events => {
+                resolve(events);
+            });
+        });
+        
+    }
 }
 
 module.exports = SynCoinService;
