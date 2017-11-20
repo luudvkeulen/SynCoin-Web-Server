@@ -19,13 +19,29 @@ function addAccountToInMemoryWallet(web3, encryptedAccount, password) {
     return account.address;
 }
 
+/**
+ * Returns a wallet contract with defaults set so functions can be called without specifying any options.
+ *
+ * @param web3 Web3
+ * @param walletAddress string Address of the contract.
+ * @param fromAddress string Address used by default to call the contract from. Make sure it is added to in-memory wallet before calling anything.
+ */
+function getWalletContract(web3, walletAddress, fromAddress) {
+    return new web3.eth.Contract(walletContractAbi, walletAddress, {
+        from: fromAddress,
+        gas: 200000,
+        gasPrice: 0,
+        data: walletContractData
+    });
+}
+
 class SynCoinService {
     constructor() {
         this.web3 = new Web3(web3Address);
     }
 
     /**
-     * Creates an account (public-key pair) and a wallet from that account.
+     * Creates an account (public-key pair) and a wallet contract from that account.
      *
      * @param password string
      * @returns Promise|{{encryptedAccount: object, walletContract: object}}
@@ -33,23 +49,15 @@ class SynCoinService {
     createWallet(password) {
         // Create account
         let encryptedAccount = this.web3.eth.accounts.create().encrypt(password);
+        let accountAddress = addAccountToInMemoryWallet(this.web3, encryptedAccount, password);
 
         // Create and deploy contract from created account
-        let walletContract = new this.web3.eth.Contract(walletContractAbi);
-
-        addAccountToInMemoryWallet(this.web3, encryptedAccount, password);
+        let walletContract = getWalletContract(this.web3, null, accountAddress);
 
         return new Promise((resolve) => {
             walletContract
-                .deploy({
-                    data: walletContractData,
-                    arguments: []
-                })
-                .send({
-                    from: encryptedAccount.address,
-                    gas: 200000,
-                    gasPrice: 0
-                })
+                .deploy()
+                .send()
                 // Wait till the contract was mined in a block before returning
                 .on("receipt", (receipt) => {
                     walletContract.options.address = receipt.contractAddress;
