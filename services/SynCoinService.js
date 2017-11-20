@@ -7,13 +7,16 @@ const walletContractData = "0x6060604052336000806101000a81548173ffffffffffffffff
 const web3Address = "ws://localhost:8546";
 
 /**
- * @param web3
- * @param encryptedAccount
- * @param password
- * @return string address to send transactions with
+ * @param web3 Web3
+ * @param encryptedAccount object
+ * @param password string
+ * @return address string to send transactions with
  */
 function addAccountToInMemoryWallet(web3, encryptedAccount, password) {
-    throw Error("Not implemented.");
+    let account = web3.eth.accounts.decrypt(encryptedAccount, password);
+    web3.eth.accounts.wallet.add(account);
+
+    return account.address;
 }
 
 class SynCoinService {
@@ -28,38 +31,34 @@ class SynCoinService {
      * @returns Promise|{{encryptedAccount: object, walletContract: object}}
      */
     createWallet(password) {
-        // TODO: Enforce password requirements here?
-
         // Create account
-        let account = this.web3.eth.accounts.create();
-        let encryptedAccount = account.encrypt(password);
+        let encryptedAccount = this.web3.eth.accounts.create().encrypt(password);
 
-        // Create and deploy contract
+        // Create and deploy contract from created account
         let walletContract = new this.web3.eth.Contract(walletContractAbi);
 
-        let walletCreationData = walletContract.deploy({
-            data: walletContractData,
-            arguments: []
-        }).encodeABI();
+        addAccountToInMemoryWallet(this.web3, encryptedAccount, password);
 
-        return new Promise((resolve, reject) => {
-            // Sign contract deployment transaction with created account
-            this.web3.eth.accounts.signTransaction({
-                data: walletCreationData,
-                gasPrice: 0,
-                gas: 200000
-            }, account.privateKey).then((signedTransaction) => {
-                // Commit the transaction and retrieve its address
-                this.web3.eth.sendSignedTransaction(signedTransaction.rawTransaction)
-                    .on("receipt", (receipt) => {
-                        walletContract.options.address = receipt.contractAddress;
+        return new Promise((resolve) => {
+            walletContract
+                .deploy({
+                    data: walletContractData,
+                    arguments: []
+                })
+                .send({
+                    from: encryptedAccount.address,
+                    gas: 200000,
+                    gasPrice: 0
+                })
+                // Wait till the contract was mined in a block before returning
+                .on("receipt", (receipt) => {
+                    walletContract.options.address = receipt.contractAddress;
 
-                        resolve({
-                            encryptedAccount: encryptedAccount,
-                            walletContract: walletContract
-                        });
+                    resolve({
+                        encryptedAccount: encryptedAccount,
+                        walletContract: walletContract
                     });
-            });
+                });
         });
     }
 
