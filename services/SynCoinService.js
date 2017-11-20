@@ -10,7 +10,7 @@ const web3Address = "ws://localhost:8546";
  * @param web3 Web3
  * @param encryptedAccount object
  * @param password string
- * @return address string to send transactions with
+ * @return string Address to send transactions with.
  */
 function addAccountToInMemoryWallet(web3, encryptedAccount, password) {
     let account = web3.eth.accounts.decrypt(encryptedAccount, password);
@@ -90,10 +90,12 @@ class SynCoinService {
         }
     }
 
-    sendTransaction(walletAddress, encryptedAccount, password, toAddress, amount) { //todo: dit
-        let contract = web3.eth.contract(walletContractAbi).at(walletAddress);
+    sendTransaction(walletAddress, encryptedAccount, password, toAddress, amount) {
+        let accountAddress = addAccountToInMemoryWallet(this.web3, encryptedAccount, password);
+        let walletContract = getWalletContract(this.web3, walletAddress, accountAddress);
+
         return new Promise((resolve, reject) => {
-            contract.methods.send(toAddress, amount).send({ from: addAccountToInMemoryWallet(Web3, encryptedAccount, password), gas: 0 })
+            walletContract.methods.send(toAddress, amount)
                 .on('receipt', (receipt) => {
                     resolve({transactionHash: receipt.transactionHash});
                 }).on('error', (error) => {
