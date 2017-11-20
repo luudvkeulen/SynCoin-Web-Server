@@ -72,7 +72,7 @@ class SynCoinService {
                 .deploy()
                 .send()
                 // Wait till the contract was mined in a block before returning
-                .on("receipt", (receipt) => {
+                .then((receipt) => {
                     walletContract.options.address = receipt.contractAddress;
 
                     resolve({
@@ -122,10 +122,17 @@ class SynCoinService {
         let accountAddress = addAccountToInMemoryWallet(this.web3, encryptedAccount, password);
         let orderContract = getOrderContract(this.web3, orderAddress, accountAddress);
 
+        // TODO: Send from wallet instead of account
+
         return new Promise((resolve, reject) => {
-            orderContract.methods.order(reference).send({value: amount})
-                .on("receipt", (receipt) => {
-                    resolve(receipt.transactionHash);
+            orderContract.methods.order(reference)
+                .send({value: amount})
+                .then((receipt) => {
+                    if (receipt.events.OrderCreated) {
+                        resolve();
+                    } else {
+                        reject("Transaction was executed, but order was not created.");
+                    }
                 });
         });
     }
