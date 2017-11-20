@@ -1,5 +1,4 @@
-const Web3 = require("web3");
-const web3 = new Web3("ws://localhost:8546");
+const syncoinService = require("./services/SynCoinService");
 
 exports.createWallet = function (req, res) {
     return res.status(200).send("wallet enzo");
@@ -14,7 +13,11 @@ exports.getBalance = function (req, res) {
 };
 
 exports.sendTransaction = function (req, res) {
-    
+    syncoinService.sendTransaction(req.query.walletAddress, req.query.encryptedAccount, req.query.password, req.query.toAddress, req.query.amount).then( value => {
+        return res.status(200).send(value);
+      }, error => {
+        return res.status(500).send(error);
+      });
 };
 
 exports.createOrder = function (req, res) {
