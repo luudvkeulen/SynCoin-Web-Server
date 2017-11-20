@@ -16,7 +16,7 @@ router.post('/login', (req, res) => {
     res.sendStatus(200);
 });
 
-router.post('/register', (req, res) => {
+router.post('/api/user/register', (req, res) => {
     let user = req.body;
     console.log(user);
 
@@ -30,8 +30,11 @@ router.post('/register', (req, res) => {
     });
 
     newUser.save((err) => {
-        if(err) throw err;
-        return res.send("ok");
+        if(err) {
+            res.sendStatus(500);
+            throw err;
+        }
+        return res.sendStatus(200);
     });
 });
 
