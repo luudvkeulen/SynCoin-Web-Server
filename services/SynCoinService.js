@@ -25,6 +25,7 @@ function addAccountToInMemoryWallet(web3, encryptedAccount, password) {
  * @param web3 Web3
  * @param walletAddress string Address of the contract.
  * @param fromAddress string Address used by default to call the contract from. Make sure it is added to in-memory wallet before calling anything.
+ * @return Contract
  */
 function getWalletContract(web3, walletAddress, fromAddress) {
     return new web3.eth.Contract(walletContractAbi, walletAddress, {
@@ -32,6 +33,18 @@ function getWalletContract(web3, walletAddress, fromAddress) {
         gas: 200000,
         gasPrice: 0,
         data: walletContractData
+    });
+}
+
+/**
+ * Ayy, see getWalletContract and replace wallet with order.
+ * @return Contract
+ */
+function getOrderContract(web3, orderAddress, fromAddress) {
+    return new web3.eth.Contract(orderContractAbi, orderAddress, {
+        from: fromAddress,
+        gas: 200000,
+        gasPrice: 0,
     });
 }
 
@@ -98,8 +111,21 @@ class SynCoinService {
             walletContract.methods.send(toAddress, amount)
                 .on('receipt', (receipt) => {
                     resolve({transactionHash: receipt.transactionHash});
-                }).on('error', (error) => {
+                })
+                .on('error', (error) => {
                     reject(error);
+                });
+        });
+    }
+
+    createOrder(orderAddress, encryptedAccount, password, amount, reference) {
+        let accountAddress = addAccountToInMemoryWallet(this.web3, encryptedAccount, password);
+        let orderContract = getOrderContract(this.web3, orderAddress, accountAddress);
+
+        return new Promise((resolve, reject) => {
+            orderContract.methods.order(reference).send({value: amount})
+                .on("receipt", (receipt) => {
+                    resolve(receipt.transactionHash);
                 });
         });
     }
