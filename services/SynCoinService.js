@@ -85,12 +85,9 @@ class SynCoinService {
     sendTransaction(walletAddress, encryptedAccount, password, toAddress, amount) { //todo: dit
         let contract = web3.eth.contract(walletContractAbi).at(walletAddress);
         return new Promise((resolve, reject) => {
-            contract.methods.send(toAddress, amount).send({ from: addAccountToInMemoryWallet(Web3, encryptedAccount, password) })
+            contract.methods.send(toAddress, amount).send({ from: addAccountToInMemoryWallet(Web3, encryptedAccount, password), gas: 0 })
                 .on('receipt', (receipt) => {
-
-                    resolve({
-                        transactionHash: receipt.transactionHash
-                    });
+                    resolve({transactionHash: receipt.transactionHash});
                 }).on('error', (error) => {
                     reject(error);
                 });
