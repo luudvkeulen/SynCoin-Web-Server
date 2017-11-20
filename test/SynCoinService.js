@@ -31,33 +31,41 @@ describe("SynCoinService", function () {
 
     describe("#verifyPassword", () => {
         it("should return false when the password is invalid", () => {
-            assert.ok(!service.verifyPassword(walletData.encryptedAccount, "badPassword"));
+            assert(!service.verifyPassword(walletData.encryptedAccount, "badPassword"));
         });
 
         it("should return true when the password is valid", () => {
-            assert.ok(service.verifyPassword(walletData.encryptedAccount, "goodPassword"));
+            assert(service.verifyPassword(walletData.encryptedAccount, "goodPassword"));
         });
     });
 
+    let orderReference = "unitTestOrder" + Math.floor(Math.random() * 1000000);
+    let encryptedAccount = {"version":3,"id":"9902e8e7-d146-4186-b2ad-a039133b100f","address":"66974e872deaf3b9ef4a2eaa3689c8fd00bc70fe","crypto":{"ciphertext":"a489cb97717dc186e1baeae2207bdb191e8b9eddd2314db0bd2daa021041ae14","cipherparams":{"iv":"36208b8773412975831275203b64054e"},"cipher":"aes-128-ctr","kdf":"scrypt","kdfparams":{"dklen":32,"salt":"5f1570e38960471acdafc9d67a15999c543e86fe1fdf44f5d822f1792db96a40","n":8192,"r":8,"p":1},"mac":"d7216171c762e566655e120aa92d8b11aa6b97e57e8f02d365d6a359ebf4f504"}};
 
-    describe("#getTransactions", () => {
-        it("should be able to get all transactions of a contract", () => {
-            password = "urpassword";
+    describe("#createOrder", () => {
+        it("should successfully create an order", () => {
+            return service.createOrder("0x345b63fcAA8fe182ad94564985edc0235EEC0ac4", encryptedAccount, "goodPassword", 1000, orderReference);
+        });
 
-            service.createWallet(password).then((walletData) => {
-                toAddress = "0xD6eB2D0F2bD06e4cfbAE75215B36971CB723D875";
-                amount = 999999;
-
-                service.sendTransaction(walletData.walletContract.options.address, walletData.encryptedAccount, password, toAddress, amount).then(() => {
-
-                    return service.getTransactions(walletData.walletContract.options.address, walletData.encryptedAccount, password).then((data) => {
-
-                        assert.ok(data);
-                        console.info("Transactions: " + data);
-                    });
+        it("should fail to create an order with the same reference twice", () => {
+            return service.createOrder("0x345b63fcAA8fe182ad94564985edc0235EEC0ac4", encryptedAccount, "goodPassword", 1000, orderReference)
+                .then(() => {
+                    assert(false);
+                })
+                .catch(() => {
+                    assert(true);
                 });
-            });
         });
     });
 
+    describe("#cancelOrder", () => {
+        it("should be able to cancel the order immediately after creating it", () => {
+            return service.cancelOrder("0x345b63fcAA8fe182ad94564985edc0235EEC0ac4", encryptedAccount, "goodPassword", 1000, orderReference);
+
+            // TODO: Verify that balance has been refunded?
+        });
+    });
+
+    // TODO: Test create into webshop confirm into not being able to cancel
+    // TODO: Test create into webshop confirm into customer confirm
 });

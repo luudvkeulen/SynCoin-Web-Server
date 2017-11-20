@@ -25,6 +25,7 @@ function addAccountToInMemoryWallet(web3, encryptedAccount, password) {
  * @param web3 Web3
  * @param walletAddress string Address of the contract.
  * @param fromAddress string Address used by default to call the contract from. Make sure it is added to in-memory wallet before calling anything.
+ * @return Contract
  */
 function getWalletContract(web3, walletAddress, fromAddress) {
     return new web3.eth.Contract(walletContractAbi, walletAddress, {
@@ -32,6 +33,18 @@ function getWalletContract(web3, walletAddress, fromAddress) {
         gas: 200000,
         gasPrice: 0,
         data: walletContractData
+    });
+}
+
+/**
+ * Ayy, see getWalletContract and replace wallet with order.
+ * @return Contract
+ */
+function getOrderContract(web3, orderAddress, fromAddress) {
+    return new web3.eth.Contract(orderContractAbi, orderAddress, {
+        from: fromAddress,
+        gas: 200000,
+        gasPrice: 0,
     });
 }
 
@@ -59,7 +72,7 @@ class SynCoinService {
                 .deploy()
                 .send()
                 // Wait till the contract was mined in a block before returning
-                .on("receipt", (receipt) => {
+                .then((receipt) => {
                     walletContract.options.address = receipt.contractAddress;
 
                     resolve({
@@ -98,23 +111,58 @@ class SynCoinService {
             walletContract.methods.send(toAddress, amount)
                 .on('receipt', (receipt) => {
                     resolve({transactionHash: receipt.transactionHash});
-                }).on('error', (error) => {
+                })
+                .on('error', (error) => {
                     reject(error);
                 });
         });
     }
 
-    getTransactions(walletAddress, encryptedAccount, password){
+    /**
+     * @param orderAddress string
+     * @param encryptedAccount object
+     * @param password string
+     * @param amount Number
+     * @param reference string
+     * @returns {Promise} Resolves when the order is successfully created.
+     */
+    createOrder(orderAddress, encryptedAccount, password, amount, reference) {
         let accountAddress = addAccountToInMemoryWallet(this.web3, encryptedAccount, password);
-        let walletContract = getWalletContract(this.web3, walletAddress, accountAddress);
+        let orderContract = getOrderContract(this.web3, orderAddress, accountAddress);
+
+        // TODO: Send from wallet instead of account
 
         return new Promise((resolve, reject) => {
-            walletContract.getPastEvents('allEvents', {fromBlock: 0, toBlock: 'latest'})
-            .then(events => {
-                resolve(events);
-            });
+            orderContract.methods.order(reference)
+                .send({value: amount})
+                .then((receipt) => {
+                    // TODO: Check if true was returned instead of event
+                    if (receipt.events.OrderCreated) {
+                        resolve();
+                    } else {
+                        reject(new Error("Transaction was executed, but order was not created."));
+                    }
+                });
         });
-        
+    }
+
+    cancelOrder(orderAddress, encryptedAccount, password, reference) {
+        let accountAddress = addAccountToInMemoryWallet(this.web3, encryptedAccount, password);
+        let orderContract = getOrderContract(this.web3, orderAddress, accountAddress);
+
+        // TODO: Send from wallet instead of account
+        return new Promise((resolve, reject) => {
+            orderContract.methods.cancel(reference)
+                .send()
+                .then((receipt) => {
+                    // TODO: Check if true was returned instead of event
+                    if (receipt.events.OrderCanceled) {
+                        resolve();
+                    } else {
+                        reject(new Error("Transaction was executed, but order was not canceled."));
+                    }
+                });
+        });
     }
 }
 
