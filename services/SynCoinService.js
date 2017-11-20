@@ -118,6 +118,14 @@ class SynCoinService {
         });
     }
 
+    /**
+     * @param orderAddress string
+     * @param encryptedAccount object
+     * @param password string
+     * @param amount Number
+     * @param reference string
+     * @returns {Promise} Resolves when the order is successfully created.
+     */
     createOrder(orderAddress, encryptedAccount, password, amount, reference) {
         let accountAddress = addAccountToInMemoryWallet(this.web3, encryptedAccount, password);
         let orderContract = getOrderContract(this.web3, orderAddress, accountAddress);
@@ -131,7 +139,25 @@ class SynCoinService {
                     if (receipt.events.OrderCreated) {
                         resolve();
                     } else {
-                        reject("Transaction was executed, but order was not created.");
+                        reject(new Error("Transaction was executed, but order was not created."));
+                    }
+                });
+        });
+    }
+
+    cancelOrder(orderAddress, encryptedAccount, password, reference) {
+        let accountAddress = addAccountToInMemoryWallet(this.web3, encryptedAccount, password);
+        let orderContract = getOrderContract(this.web3, orderAddress, accountAddress);
+
+        // TODO: Send from wallet instead of account
+        return new Promise((resolve, reject) => {
+            orderContract.methods.cancel(reference)
+                .send()
+                .then((receipt) => {
+                    if (receipt.events.OrderCanceled) {
+                        resolve();
+                    } else {
+                        reject(new Error("Transaction was executed, but order was not canceled."));
                     }
                 });
         });
