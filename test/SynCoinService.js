@@ -63,7 +63,7 @@ describe("SynCoinService", function () {
 
     describe("#cancelOrder", () => {
         it("should be able to cancel the order immediately after creating it", () => {
-            return service.cancelOrder(encryptedAccount, "goodPassword", 1000, orderReference);
+            return service.cancelOrder(encryptedAccount, "goodPassword", orderReference);
 
             // TODO: Verify that balance has been refunded?
         });
