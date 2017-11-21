@@ -16,13 +16,21 @@ router.post('/login', (req, res) => {
     res.sendStatus(200);
 });
 
-router.post('/api/user/register', (req, res) => {
+router.post('/register', (req, res) => {
     let user = req.body;
-    console.log(user);
+    if (!user.email
+        || !user.name
+        || !user.lastname
+        || !user.phone
+        || !user.company
+        || !user.address
+        || !user.password) {
+        return res.sendStatus(500);
+    }
 
     let newUser = User({
         email: user.email,
-        surname: user.surname,
+        surname: user.name,
         lastname: user.lastname,
         phone: user.phone,
         company: user.company,
@@ -30,9 +38,8 @@ router.post('/api/user/register', (req, res) => {
     });
 
     newUser.save((err) => {
-        if(err) {
-            res.sendStatus(500);
-            throw err;
+        if (err) {
+            return res.sendStatus(500);
         }
         return res.sendStatus(200);
     });
