@@ -1,19 +1,23 @@
 const Web3 = require("web3");
 
-const orderContractAbi = [{ "constant": true, "inputs": [], "name": "active", "outputs": [{ "name": "", "type": "bool" }], "payable": false, "stateMutability": "view", "type": "function" }, { "constant": false, "inputs": [{ "name": "_reference", "type": "string" }], "name": "cancel", "outputs": [], "payable": false, "stateMutability": "nonpayable", "type": "function" }, { "constant": true, "inputs": [], "name": "beerPrice", "outputs": [{ "name": "", "type": "uint256" }], "payable": false, "stateMutability": "view", "type": "function" }, { "constant": false, "inputs": [], "name": "toggleActive", "outputs": [], "payable": false, "stateMutability": "nonpayable", "type": "function" }, { "constant": true, "inputs": [], "name": "orderLifetime", "outputs": [{ "name": "", "type": "uint256" }], "payable": false, "stateMutability": "view", "type": "function" }, { "constant": false, "inputs": [], "name": "drain", "outputs": [], "payable": false, "stateMutability": "nonpayable", "type": "function" }, { "constant": false, "inputs": [{ "name": "_reference", "type": "string" }], "name": "confirm", "outputs": [], "payable": false, "stateMutability": "nonpayable", "type": "function" }, { "constant": false, "inputs": [{ "name": "_reference", "type": "string" }], "name": "order", "outputs": [], "payable": true, "stateMutability": "payable", "type": "function" }, { "inputs": [{ "name": "_beerPrice", "type": "uint256" }, { "name": "_orderLifetime", "type": "uint256" }], "payable": false, "stateMutability": "nonpayable", "type": "constructor" }, { "anonymous": false, "inputs": [{ "indexed": false, "name": "_reference", "type": "string" }, { "indexed": false, "name": "amount", "type": "uint256" }], "name": "OrderCreated", "type": "event" }, { "anonymous": false, "inputs": [{ "indexed": false, "name": "_reference", "type": "string" }], "name": "OrderConfirmed", "type": "event" }];
-const orderContractAddress = "0x345b63fcaa8fe182ad94564985edc0235eec0ac4";
-const walletContractAbi = [{ "constant": false, "inputs": [{ "name": "receiver", "type": "address" }, { "name": "amount", "type": "uint256" }], "name": "send", "outputs": [], "payable": false, "stateMutability": "nonpayable", "type": "function" }, { "inputs": [], "payable": true, "stateMutability": "payable", "type": "constructor" }, { "payable": true, "stateMutability": "payable", "type": "fallback" }, { "anonymous": false, "inputs": [{ "indexed": false, "name": "sender", "type": "address" }, { "indexed": false, "name": "amount", "type": "uint256" }], "name": "TransactionReceived", "type": "event" }, { "anonymous": false, "inputs": [{ "indexed": false, "name": "receiver", "type": "address" }, { "indexed": false, "name": "amount", "type": "uint256" }], "name": "TransactionSent", "type": "event" }];
-const walletContractData = "0x6060604052336000806101000a81548173ffffffffffffffffffffffffffffffffffffffff021916908373ffffffffffffffffffffffffffffffffffffffff160217905550610230806100536000396000f300606060405260043610610041576000357c0100000000000000000000000000000000000000000000000000000000900463ffffffff168063d0679d34146100b8575b60003411156100b6577fea8894086f544a14fafefe000f478d734be3087de78435eb799669d5191a3acd3334604051808373ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff1681526020018281526020019250505060405180910390a15b005b34156100c357600080fd5b6100f8600480803573ffffffffffffffffffffffffffffffffffffffff169060200190919080359060200190919050506100fa565b005b6000809054906101000a900473ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff163373ffffffffffffffffffffffffffffffffffffffff1614151561015557600080fd5b8173ffffffffffffffffffffffffffffffffffffffff166108fc829081150290604051600060405180830381858888f19350505050151561019557600080fd5b7f4970bf8595442008a41b189fc026906b953e2a419e3029e6d0d6ce02a33ba85d8282604051808373ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff1681526020018281526020019250505060405180910390a150505600a165627a7a72305820d14c580b2a20e3b69c7a01dd44a6ac9bff2a789017d2b3e3beec0b837af2bdc50029";
+const shopContractAbi = [{"constant":true,"inputs":[],"name":"active","outputs":[{"name":"","type":"bool"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":false,"inputs":[{"name":"_reference","type":"string"}],"name":"cancel","outputs":[{"name":"","type":"bool"}],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":false,"inputs":[],"name":"toggleActive","outputs":[{"name":"","type":"bool"}],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":true,"inputs":[],"name":"orderLifetime","outputs":[{"name":"","type":"uint256"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":false,"inputs":[{"name":"_reference","type":"string"}],"name":"confirmDelivering","outputs":[{"name":"","type":"bool"}],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":false,"inputs":[],"name":"drain","outputs":[{"name":"","type":"bool"}],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":false,"inputs":[{"name":"_reference","type":"string"}],"name":"confirmReceived","outputs":[{"name":"","type":"bool"}],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":false,"inputs":[{"name":"_reference","type":"string"}],"name":"order","outputs":[{"name":"","type":"bool"}],"payable":true,"stateMutability":"payable","type":"function"},{"inputs":[{"name":"_orderLifetime","type":"uint256"}],"payable":false,"stateMutability":"nonpayable","type":"constructor"},{"anonymous":false,"inputs":[{"indexed":false,"name":"_reference","type":"string"},{"indexed":false,"name":"amount","type":"uint256"}],"name":"OrderCreated","type":"event"},{"anonymous":false,"inputs":[{"indexed":false,"name":"_reference","type":"string"}],"name":"OrderConfirmedDelivering","type":"event"},{"anonymous":false,"inputs":[{"indexed":false,"name":"_reference","type":"string"}],"name":"OrderConfirmed","type":"event"},{"anonymous":false,"inputs":[{"indexed":false,"name":"_reference","type":"string"}],"name":"OrderCanceled","type":"event"}];
+const shopContractAddress = "0x5a4fC06c59DA9b9936ca216e904c922a03C48DAb";
+const walletContractAbi = [{"constant":false,"inputs":[{"name":"receiver","type":"address"},{"name":"amount","type":"uint256"}],"name":"send","outputs":[{"name":"","type":"bool"}],"payable":false,"stateMutability":"nonpayable","type":"function"},{"inputs":[{"name":"_owner","type":"address"}],"payable":true,"stateMutability":"payable","type":"constructor"},{"payable":true,"stateMutability":"payable","type":"fallback"},{"anonymous":false,"inputs":[{"indexed":false,"name":"sender","type":"address"},{"indexed":false,"name":"amount","type":"uint256"}],"name":"TransactionReceived","type":"event"},{"anonymous":false,"inputs":[{"indexed":false,"name":"receiver","type":"address"},{"indexed":false,"name":"amount","type":"uint256"}],"name":"TransactionSent","type":"event"}];
+const walletContractData = "0x60606040526040516020806102c083398101604052808051906020019091905050806000806101000a81548173ffffffffffffffffffffffffffffffffffffffff021916908373ffffffffffffffffffffffffffffffffffffffff16021790555050610250806100706000396000f300606060405260043610610041576000357c0100000000000000000000000000000000000000000000000000000000900463ffffffff168063d0679d34146100b8575b60003411156100b6577fea8894086f544a14fafefe000f478d734be3087de78435eb799669d5191a3acd3334604051808373ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff1681526020018281526020019250505060405180910390a15b005b34156100c357600080fd5b6100f8600480803573ffffffffffffffffffffffffffffffffffffffff16906020019091908035906020019091905050610112565b604051808215151515815260200191505060405180910390f35b60008060009054906101000a900473ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff163373ffffffffffffffffffffffffffffffffffffffff1614151561016f57600080fd5b8273ffffffffffffffffffffffffffffffffffffffff166108fc839081150290604051600060405180830381858888f1935050505015156101af57600080fd5b7f4970bf8595442008a41b189fc026906b953e2a419e3029e6d0d6ce02a33ba85d8383604051808373ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff1681526020018281526020019250505060405180910390a160019050929150505600a165627a7a723058208d117b8949904cb3eaf2e894268bdbcbbee18b1366a32b8a9cb9d7b346a45f3b0029";
 const web3Address = "ws://localhost:8546";
 
 /**
  * @param web3 Web3
- * @param encryptedAccount object
+ * @param account object
  * @param password string
  * @return string Address to send transactions with.
  */
-function addAccountToInMemoryWallet(web3, encryptedAccount, password) {
-    let account = web3.eth.accounts.decrypt(encryptedAccount, password);
+function addAccountToInMemoryWallet(web3, account, password) {
+    // Decrypt encrypted account first
+    if (!account.privateKey) {
+        account = web3.eth.accounts.decrypt(account, password);
+    }
+
     web3.eth.accounts.wallet.add(account);
 
     return account.address;
@@ -37,11 +41,11 @@ function getWalletContract(web3, walletAddress, fromAddress) {
 }
 
 /**
- * Ayy, see getWalletContract and replace wallet with order.
+ * Ayy, see getWalletContract and replace wallet with shop.
  * @return Contract
  */
-function getOrderContract(web3, orderAddress, fromAddress) {
-    return new web3.eth.Contract(orderContractAbi, orderAddress, {
+function getShopContract(web3, shopAddress, fromAddress) {
+    return new web3.eth.Contract(shopContractAbi, shopAddress, {
         from: fromAddress,
         gas: 1000000,
         gasPrice: 100000,
@@ -49,31 +53,38 @@ function getOrderContract(web3, orderAddress, fromAddress) {
 }
 
 class SynCoinService {
-    constructor() {
+    /**
+     * @param walletCreationAccount {{address: string, privateKey: string}} Unencrypted account with funds to be used for customer wallet creation.
+     */
+    constructor(walletCreationAccount) {
         this.web3 = new Web3(web3Address);
+        this.walletCreationAccount = walletCreationAccount;
     }
 
     /**
-     * Creates an account (public-key pair) and a wallet contract from that account.
+     * Creates an account (public-key pair) and a wallet contract owned by that account.
      *
      * @param password string
      * @returns Promise|{{encryptedAccount: object, walletContract: object}}
      */
     createWallet(password) {
-        // Create account
+        // Create account to own the wallet
         let encryptedAccount = this.web3.eth.accounts.create().encrypt(password);
-        let accountAddress = addAccountToInMemoryWallet(this.web3, encryptedAccount, password);
+        let walletCreationAddress = addAccountToInMemoryWallet(this.web3, this.walletCreationAccount);
 
-        // Create and deploy contract from created account
-        let walletContract = getWalletContract(this.web3, null, accountAddress);
+        // Create and deploy contract from the wallet creation account
+        let walletContract = getWalletContract(this.web3, null, walletCreationAddress);
 
         return new Promise((resolve) => {
             walletContract
-                .deploy()
+                .deploy({
+                    arguments: [walletCreationAddress]
+                })
                 .send()
-                // Wait till the contract was mined in a block before returning
                 .then((receipt) => {
+                    // After the contract is mined, return with an account and contract called from that account
                     walletContract.options.address = receipt.contractAddress;
+                    walletContract.options.from = encryptedAccount.address;
 
                     resolve({
                         encryptedAccount: encryptedAccount,
@@ -119,16 +130,16 @@ class SynCoinService {
     }
 
     /**
-     * @param orderAddress string
+     * @param shopAddress string
      * @param encryptedAccount object
      * @param password string
      * @param amount Number
      * @param reference string
      * @returns {Promise} Resolves when the order is successfully created.
      */
-    createOrder(orderAddress, encryptedAccount, password, amount, reference) {
+    createOrder(shopAddress, encryptedAccount, password, amount, reference) {
         let accountAddress = addAccountToInMemoryWallet(this.web3, encryptedAccount, password);
-        let orderContract = getOrderContract(this.web3, orderAddress, accountAddress);
+        let orderContract = getShopContract(this.web3, shopAddress, accountAddress);
 
         // TODO: Send from wallet instead of account
 
@@ -146,9 +157,9 @@ class SynCoinService {
         });
     }
 
-    cancelOrder(orderAddress, encryptedAccount, password, reference) {
+    cancelOrder(shopAddress, encryptedAccount, password, reference) {
         let accountAddress = addAccountToInMemoryWallet(this.web3, encryptedAccount, password);
-        let orderContract = getOrderContract(this.web3, orderAddress, accountAddress);
+        let orderContract = getShopContract(this.web3, shopAddress, accountAddress);
 
         // TODO: Send from wallet instead of account
         return new Promise((resolve, reject) => {

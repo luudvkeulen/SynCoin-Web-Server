@@ -9,7 +9,10 @@ describe("SynCoinService", function () {
     let walletData;
 
     before(() => {
-        service = new SynCoinService();
+        service = new SynCoinService({
+            "address": "0x66974E872deaf3B9eF4a2EAa3689c8Fd00bC70FE",
+            "privateKey": "0x80a302d42612a1b0767472e165a7230da7a06e0e75f94a6885565bf46d97e65f"
+        });
     });
 
     describe("#createWallet", () => {
