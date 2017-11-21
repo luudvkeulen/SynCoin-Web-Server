@@ -3,7 +3,7 @@ const SynCoinService = require("../services/SynCoinService");
 
 describe("SynCoinService", function () {
     // Contract creation takes a while (needs to be mined), set a high timeout
-    this.timeout(60000);
+    this.timeout(120000);
 
     let service;
     let walletData;
@@ -47,11 +47,11 @@ describe("SynCoinService", function () {
 
     describe("#createOrder", () => {
         it("should successfully create an order", () => {
-            return service.createOrder("0x345b63fcAA8fe182ad94564985edc0235EEC0ac4", encryptedAccount, "goodPassword", 1000, orderReference);
+            return service.createOrder(encryptedAccount, "goodPassword", 1000, orderReference);
         });
 
         it("should fail to create an order with the same reference twice", () => {
-            return service.createOrder("0x345b63fcAA8fe182ad94564985edc0235EEC0ac4", encryptedAccount, "goodPassword", 1000, orderReference)
+            return service.createOrder(encryptedAccount, "goodPassword", 1000, orderReference)
                 .then(() => {
                     assert(false);
                 })
@@ -63,7 +63,7 @@ describe("SynCoinService", function () {
 
     describe("#cancelOrder", () => {
         it("should be able to cancel the order immediately after creating it", () => {
-            return service.cancelOrder("0x345b63fcAA8fe182ad94564985edc0235EEC0ac4", encryptedAccount, "goodPassword", 1000, orderReference);
+            return service.cancelOrder(encryptedAccount, "goodPassword", 1000, orderReference);
 
             // TODO: Verify that balance has been refunded?
         });
