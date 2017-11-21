@@ -5,7 +5,11 @@ exports.createWallet = function (req, res) {
 };
 
 exports.getTransactions = function (req, res) {
-
+    syncoinService.getTransactions(req.query.walletAddress, req.query.encryptedAccount, req.query.password).then(value => {
+        return res.status(200).send(value);
+    }, error => {
+        return res.status(500).send(error);
+    });
 };
 
 exports.getBalance = function (req, res) {
@@ -25,11 +29,19 @@ exports.sendTransaction = function (req, res) {
 };
 
 exports.createOrder = function (req, res) {
-
+    syncoinService.createOrder(req.query.orderAddress, req.query.encryptedAccount, req.query.password, req.query.amount, req.query.reference).then(value => {
+        return res.status(200).send(value);
+    }, error => {
+        return res.status(500).send(error);
+    });
 };
 
 exports.cancelOrder = function (req, res) {
-
+    syncoinService.cancelOrder(req.query.orderAddress, req.query.encryptedAccount, req.query.password, req.query.reference).then(value => {
+        return res.status(200).send(value);
+    }, error => {
+        return res.status(500).send(error);
+    });
 };
 
 exports.confirmOrder = function (req, res) {
