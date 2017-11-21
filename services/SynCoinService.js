@@ -130,7 +130,6 @@ class SynCoinService {
         });
     }
 
-    
     getBalance(address) {
         return new Promise((resolve, reject) => {
             this.web3.eth.getBalance(address).then(balance => {

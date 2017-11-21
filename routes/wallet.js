@@ -7,4 +7,6 @@ router.post('/create', walletController.createWallet);
 
 router.post('/tx', walletController.sendTransaction);
 
+router.get('/balance', walletController.getBalance);
+
 module.exports = router;

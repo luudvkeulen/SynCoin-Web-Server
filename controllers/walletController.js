@@ -9,7 +9,11 @@ exports.getTransactions = function (req, res) {
 };
 
 exports.getBalance = function (req, res) {
-    
+    syncoinService.getBalance(req.query.address).then( value => {
+        return res.status(200).send(value);
+      }, error => {
+        return res.status(500).send(error);
+      });
 };
 
 exports.sendTransaction = function (req, res) {
