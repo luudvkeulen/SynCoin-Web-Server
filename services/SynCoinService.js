@@ -1,6 +1,6 @@
 class SynCoinService {
     verifyPassword(encryptedAccount, password) {
-        return false;
+        return true;
     }
 }
 
