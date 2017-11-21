@@ -70,17 +70,28 @@ describe("SynCoinService", function () {
         it("should be able to get all transactions of a contract", () => {
             password = "urpassword";
 
+            console.log("Creating wallet");
             service.createWallet(password).then((walletData) => {
                 let toAddress = "0xD6eB2D0F2bD06e4cfbAE75215B36971CB723D875";
                 let amount = 999;
 
                 console.log(walletData.walletContract.options.address);
                 
+                console.log("Sending transaction");
                 service.sendTransaction(walletData.walletContract.options.address, walletData.encryptedAccount, password, toAddress, amount).then(obj => {
 
                     console.info("Transaction: " + obj);
                     assert.ok(obj);
                 });
+            });
+        });
+    });
+
+    describe("#getBalance", () => {
+        it("should be able to get balance of an address", () => {
+            service.getBalance("0x0C01824635711e785D850244979F3b7C1161266F").then(balance => {
+                console.info("Balance: " + balance);
+                assert.ok(balance);
             });
         });
     });
