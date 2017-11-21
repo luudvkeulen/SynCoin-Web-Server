@@ -108,7 +108,7 @@ class SynCoinService {
         let walletContract = getWalletContract(this.web3, walletAddress, accountAddress);
 
         return new Promise((resolve, reject) => {
-            walletContract.methods.send(toAddress, amount)
+            walletContract.methods.send(toAddress, amount).send()
                 .on('receipt', (receipt) => {
                     resolve({transactionHash: receipt.transactionHash});
                 })
@@ -116,6 +116,19 @@ class SynCoinService {
                     reject(error);
                 });
         });
+    }
+
+    getTransactions(walletAddress, encryptedAccount, password){
+        let accountAddress = addAccountToInMemoryWallet(this.web3, encryptedAccount, password);
+        let walletContract = getWalletContract(this.web3, walletAddress, accountAddress);
+
+        return new Promise((resolve, reject) => {
+            walletContract.getPastEvents('allEvents', {fromBlock: 0, toBlock: 'latest'})
+            .then(events => {
+                resolve(events);
+            });
+        });
+        
     }
 
     /**

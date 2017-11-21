@@ -66,6 +66,25 @@ describe("SynCoinService", function () {
         });
     });
 
+    describe("#sendTransaction", () => {
+        it("should be able to get all transactions of a contract", () => {
+            password = "urpassword";
+
+            service.createWallet(password).then((walletData) => {
+                let toAddress = "0xD6eB2D0F2bD06e4cfbAE75215B36971CB723D875";
+                let amount = 999;
+
+                console.log(walletData.walletContract.options.address);
+                
+                service.sendTransaction(walletData.walletContract.options.address, walletData.encryptedAccount, password, toAddress, amount).then(obj => {
+
+                    console.info("Transaction: " + obj);
+                    assert.ok(obj);
+                });
+            });
+        });
+    });
+
     // TODO: Test create into webshop confirm into not being able to cancel
     // TODO: Test create into webshop confirm into customer confirm
 });
