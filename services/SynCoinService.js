@@ -63,34 +63,49 @@ class SynCoinService {
 
     /**
      * Creates an account (public-key pair) and a wallet contract owned by that account.
+     * Funds the account with some dough to perform transactions.
      *
      * @param password string
      * @returns Promise|{{encryptedAccount: object, walletContract: object}}
      */
     createWallet(password) {
         // Create account to own the wallet
+        console.info("Generating account...");
         let encryptedAccount = this.web3.eth.accounts.create().encrypt(password);
+        let accountAddress = addAccountToInMemoryWallet(this.web3, encryptedAccount, password);
         let walletCreationAddress = addAccountToInMemoryWallet(this.web3, this.walletCreationAccount);
 
-        // Create and deploy contract from the wallet creation account
-        let walletContract = getWalletContract(this.web3, null, walletCreationAddress);
+        return new Promise((resolve, reject) => {
+            console.info("Funding account with some dough...");
+            this.web3.eth.sendTransaction({
+                from: walletCreationAddress,
+                to: accountAddress,
+                value: 1000000000000000000, // 1 ether
+                gas: 1000000,
+                gasPrice: 100000
+            })
+                .then(() => {
+                    console.info("Deploying wallet contract...");
+                    // Create and deploy contract from the wallet creation account
+                    let walletContract = getWalletContract(this.web3, null, walletCreationAddress);
+                    walletContract
+                        .deploy({
+                            arguments: [walletCreationAddress]
+                        })
+                        .send()
+                        .then((receipt) => {
+                            // After the contract is mined, return with an account and contract called from that account
+                            walletContract.options.address = receipt.contractAddress;
+                            walletContract.options.from = encryptedAccount.address;
 
-        return new Promise((resolve) => {
-            walletContract
-                .deploy({
-                    arguments: [walletCreationAddress]
+                            resolve({
+                                encryptedAccount: encryptedAccount,
+                                walletContract: walletContract
+                            });
+                        })
+                        .catch(reject);
                 })
-                .send()
-                .then((receipt) => {
-                    // After the contract is mined, return with an account and contract called from that account
-                    walletContract.options.address = receipt.contractAddress;
-                    walletContract.options.from = encryptedAccount.address;
-
-                    resolve({
-                        encryptedAccount: encryptedAccount,
-                        walletContract: walletContract
-                    });
-                });
+                .catch(reject);
         });
     }
 
@@ -150,6 +165,7 @@ class SynCoinService {
         return new Promise((resolve, reject) => {
             walletContract.getPastEvents('allEvents', {fromBlock: 0, toBlock: 'latest'})
             .then(events => {
+                console.log(events);
                 resolve(events);
             });
         });
@@ -168,7 +184,6 @@ class SynCoinService {
     }
 
     /**
-     * @param orderAddress string
      * @param encryptedAccount object
      * @param password string
      * @param amount Number
@@ -187,14 +202,17 @@ class SynCoinService {
             let result = true;
             // method.call().then((result) => {
                 if (result) {
-                    method.send({value: amount}).then((receipt) => {
-                        // TODO: Check if true was returned instead of event
-                        if (receipt.events.OrderCreated) {
-                            resolve();
-                        } else {
-                            reject(new Error("Transaction was executed, but order was not created."));
-                        }
-                    });
+                    console.info("Creating order...");
+                    method.send({value: amount})
+                        .then((receipt) => {
+                            // TODO: Check if true was returned instead of event
+                            if (receipt.events.OrderCreated) {
+                                resolve();
+                            } else {
+                                reject(new Error("Transaction was executed, but order was not created."));
+                            }
+                        })
+                        .catch(reject);
                 } else {
                     reject("Could not create order (simulated call returned false).");
                 }
@@ -214,13 +232,16 @@ class SynCoinService {
             let result = true;
             // method.call().then((result) => {
                 if (result) {
-                    method.send().then((receipt) => {
-                        if (receipt.events.OrderCanceled) {
-                            resolve();
-                        } else {
-                            reject(new Error("Transaction was executed, but order was not canceled."));
-                        }
-                    });
+                    console.info("Cancelling order...");
+                    method.send()
+                        .then((receipt) => {
+                            if (receipt.events.OrderCanceled) {
+                                resolve();
+                            } else {
+                                reject(new Error("Transaction was executed, but order was not canceled."));
+                            }
+                        })
+                        .catch(reject);
                 } else {
                     reject("Order can not be canceled (simulated call returned false).");
                 }

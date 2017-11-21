@@ -17,8 +17,6 @@ describe("SynCoinService", function () {
 
     describe("#createWallet", () => {
         it("should be able to create a wallet", () => {
-            console.info("Generating wallet, sit tight...");
-
             return service.createWallet("goodPassword").then((data) => {
                 walletData = data;
 
@@ -70,23 +68,22 @@ describe("SynCoinService", function () {
     });
 
     describe("#sendTransaction", () => {
-        it("should be able to get all transactions of a contract", () => {
-            password = "urpassword";
+        it("should be able to send a transaction to a wallet", () => {
+            let toAddress = "0xD6eB2D0F2bD06e4cfbAE75215B36971CB723D875";
+            let amount = 999;
 
-            console.log("Creating wallet");
-            service.createWallet(password).then((walletData) => {
-                let toAddress = "0xD6eB2D0F2bD06e4cfbAE75215B36971CB723D875";
-                let amount = 999;
+            console.info("Sending transaction...");
+            service.sendTransaction(walletData.walletContract.options.address, walletData.encryptedAccount, "goodPassword", toAddress, amount).then(obj => {
 
-                console.log(walletData.walletContract.options.address);
-                
-                console.log("Sending transaction");
-                service.sendTransaction(walletData.walletContract.options.address, walletData.encryptedAccount, password, toAddress, amount).then(obj => {
-
-                    console.info("Transaction: " + obj);
-                    assert.ok(obj);
-                });
+                console.info("Transaction: " + obj);
+                assert.ok(obj);
             });
+        });
+    });
+
+    describe("#getTransactions", () => {
+        it("should be able to retrieve all transactions from a wallet", () => {
+
         });
     });
 
