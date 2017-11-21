@@ -131,18 +131,25 @@ class SynCoinService {
 
     /**
      * @param walletAddress string
-     * @param encryptedAccount object
+     * @param encryptedAccount object Owner of the wallet.
      * @param password string
      * @param toAddress string
      * @param amount Number
+     * @param data string
      * @returns {Promise} Resolves when the tx is broadcasted to blockchain.
      */
-    sendTransaction(walletAddress, encryptedAccount, password, toAddress, amount) {
+    sendTransaction(walletAddress, encryptedAccount, password, toAddress, amount, data) {
         let accountAddress = addAccountToInMemoryWallet(this.web3, encryptedAccount, password);
         let walletContract = getWalletContract(this.web3, walletAddress, accountAddress);
 
+        if (!data) {
+            data = "0x";
+        }
+
         return new Promise((resolve, reject) => {
-            walletContract.methods.send(toAddress, amount).send()
+            // TODO: Use call to see if succeeds
+            walletContract.methods.send(toAddress, amount, data)
+                .send()
                 .on('receipt', (receipt) => {
                     resolve({transactionHash: receipt.transactionHash});
                 })
