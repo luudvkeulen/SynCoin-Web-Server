@@ -8,8 +8,7 @@ const {passport, jwtOptions} = require('./../jwt-config');
 const walletController = require('./../controllers/WalletController');
 const userController = require('./../controllers/UserController');
 
-router.post('/login', (req, res, next) => {
-    console.log('next', next);
+router.post('/user/login', (req, res, next) => {
     const synCoinService = req.synCoinService;
     const email = req.body.email;
     const password = req.body.password;
@@ -63,5 +62,7 @@ router.post('/register', (req, res) => {
 
     return res.sendStatus(200);
 });
+
+console.log(router);
 
 module.exports = router;
