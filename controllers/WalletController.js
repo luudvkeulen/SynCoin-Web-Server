@@ -16,6 +16,19 @@ function findByEmail(email) {
     });
 }
 
-module.exports = {
-    findByEmail
+function create(email, password) {
+    //call web3js method for generating wallet
+    let newWallet = Wallet({
+        email: email,
+        encryptedAccount: null
+    });
+
+    newWallet.save((err) => {
+        return err;
+    });
 }
+
+module.exports = {
+    findByEmail,
+    create
+};
