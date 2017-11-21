@@ -114,12 +114,20 @@ class SynCoinService {
         }
     }
 
+    /**
+     * @param walletAddress string
+     * @param encryptedAccount object
+     * @param password string
+     * @param toAddress string
+     * @param amount Number
+     * @returns {Promise} Resolves when the tx is broadcasted to blockchain.
+     */
     sendTransaction(walletAddress, encryptedAccount, password, toAddress, amount) {
         let accountAddress = addAccountToInMemoryWallet(this.web3, encryptedAccount, password);
         let walletContract = getWalletContract(this.web3, walletAddress, accountAddress);
 
         return new Promise((resolve, reject) => {
-            walletContract.methods.send(toAddress, amount)
+            walletContract.methods.send(toAddress, amount).send()
                 .on('receipt', (receipt) => {
                     resolve({transactionHash: receipt.transactionHash});
                 })
@@ -130,6 +138,37 @@ class SynCoinService {
     }
 
     /**
+     * @param walletAddress string
+     * @param encryptedAccount object
+     * @param password string
+     * @returns {Promise} Resolves when events are received.
+     */
+    getTransactions(walletAddress, encryptedAccount, password){
+        let accountAddress = addAccountToInMemoryWallet(this.web3, encryptedAccount, password);
+        let walletContract = getWalletContract(this.web3, walletAddress, accountAddress);
+
+        return new Promise((resolve, reject) => {
+            walletContract.getPastEvents('allEvents', {fromBlock: 0, toBlock: 'latest'})
+            .then(events => {
+                resolve(events);
+            });
+        });
+    }
+
+    /**
+     * @param address string
+     * @returns {Promise} Resolves when the balance is received.
+     */
+    getBalance(address) {
+        return new Promise((resolve, reject) => {
+            this.web3.eth.getBalance(address).then(balance => {
+                resolve(balance);
+            });
+        });
+    }
+
+    /**
+     * @param orderAddress string
      * @param encryptedAccount object
      * @param password string
      * @param amount Number
@@ -153,7 +192,6 @@ class SynCoinService {
                         if (receipt.events.OrderCreated) {
                             resolve();
                         } else {
-                            console.log(receipt);
                             reject(new Error("Transaction was executed, but order was not created."));
                         }
                     });
@@ -180,7 +218,6 @@ class SynCoinService {
                         if (receipt.events.OrderCanceled) {
                             resolve();
                         } else {
-                            console.log(receipt);
                             reject(new Error("Transaction was executed, but order was not canceled."));
                         }
                     });
