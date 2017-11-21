@@ -103,6 +103,14 @@ class SynCoinService {
         }
     }
 
+    /**
+     * @param walletAddress string
+     * @param encryptedAccount object
+     * @param password string
+     * @param toAddress string
+     * @param amount Number
+     * @returns {Promise} Resolves when the tx is broadcasted to blockchain.
+     */
     sendTransaction(walletAddress, encryptedAccount, password, toAddress, amount) {
         let accountAddress = addAccountToInMemoryWallet(this.web3, encryptedAccount, password);
         let walletContract = getWalletContract(this.web3, walletAddress, accountAddress);
@@ -118,6 +126,12 @@ class SynCoinService {
         });
     }
 
+    /**
+     * @param walletAddress string
+     * @param encryptedAccount object
+     * @param password string
+     * @returns {Promise} Resolves when events are received.
+     */
     getTransactions(walletAddress, encryptedAccount, password){
         let accountAddress = addAccountToInMemoryWallet(this.web3, encryptedAccount, password);
         let walletContract = getWalletContract(this.web3, walletAddress, accountAddress);
@@ -130,6 +144,10 @@ class SynCoinService {
         });
     }
 
+    /**
+     * @param address string
+     * @returns {Promise} Resolves when the balance is received.
+     */
     getBalance(address) {
         return new Promise((resolve, reject) => {
             this.web3.eth.getBalance(address).then(balance => {
