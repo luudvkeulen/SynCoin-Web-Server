@@ -30,8 +30,8 @@ function addAccountToInMemoryWallet(web3, encryptedAccount, password) {
 function getWalletContract(web3, walletAddress, fromAddress) {
     return new web3.eth.Contract(walletContractAbi, walletAddress, {
         from: fromAddress,
-        gas: 200000,
-        gasPrice: 0,
+        gas: 1000000,
+        gasPrice: 100000,
         data: walletContractData
     });
 }
@@ -43,8 +43,8 @@ function getWalletContract(web3, walletAddress, fromAddress) {
 function getOrderContract(web3, orderAddress, fromAddress) {
     return new web3.eth.Contract(orderContractAbi, orderAddress, {
         from: fromAddress,
-        gas: 200000,
-        gasPrice: 0,
+        gas: 1000000,
+        gasPrice: 100000,
     });
 }
 
