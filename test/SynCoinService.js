@@ -8,8 +8,8 @@ describe("SynCoinService", function () {
     let service;
 
     // This is a pre-funded test account with wallet that can be used for shop calls
-    let encryptedAccount =  {"version":3,"id":"7f35cc97-720d-43d4-b0bf-89d5236b5eae","address":"056761859f9f572dee69038ae72a4fb010e4d1e6","crypto":{"ciphertext":"d43d7f691ea12204114f37ff261694ec3ac6af8d898ff09f28c98c1a450a6bd7","cipherparams":{"iv":"68f7fa33ccdb25f43d6fa00bc5642ce2"},"cipher":"aes-128-ctr","kdf":"scrypt","kdfparams":{"dklen":32,"salt":"72d4a450fe05cb057e560b9390172dcb140ce9d766d834ec2e9bc3fe230c0dba","n":8192,"r":8,"p":1},"mac":"61989f26f5a500195a8ee9b7d26a29c9633fc68ef9111e68d49e702bb7b58acc"}};
-    let walletAddress = "0x524C87330eF6E27F88d054DD01be184B32b8B171";
+    let encryptedAccount =  {"version":3,"id":"799b7612-3fec-468d-aa23-1c20562aa28f","address":"7d2962d453c9aab9c96aa27dd4deaf37f75111af","crypto":{"ciphertext":"2af07b452ec2c846c7a715775eaff239a809ae10fc5f60bca39ce33e9afcf815","cipherparams":{"iv":"493da42f4d3f0371d71fa4ac3b066b5a"},"cipher":"aes-128-ctr","kdf":"scrypt","kdfparams":{"dklen":32,"salt":"ea2eeec9ec6080a6428beaef9f68bcc6fd42088b03436ffe3040c02413b1adf9","n":8192,"r":8,"p":1},"mac":"61a330039c49f2fb34fabebca4eb97fc7b5572594878593b898a6b879d99e753"}};
+    let walletAddress = "0xEAEddb017Be2F9053c63fa3A5FB53c435a0F4f43";
 
     before(() => {
         service = new SynCoinService({
