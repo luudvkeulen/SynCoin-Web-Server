@@ -149,9 +149,7 @@ class SynCoinService {
         let sendMethod = walletContract.methods.send(toAddress, amount, data);
 
         return new Promise((resolve, reject) => {
-            // TODO: Remove if call can successfully decode result
-            let result = true;
-            // sendMethod.call().then((result) => {
+            sendMethod.call().then((result) => {
                 if (result) {
                     sendMethod.send()
                         .then((receipt) => {
@@ -162,7 +160,7 @@ class SynCoinService {
                 } else {
                     reject(new Error("Could not send transaction (simulated call returned false)."));
                 }
-            // })
+            })
         });
     }
 
@@ -214,9 +212,7 @@ class SynCoinService {
         let orderMethod = shopContract.methods.order(reference);
 
         return new Promise((resolve, reject) => {
-            // TODO: Remove if call can successfully decode result
-            let result = true;
-            // orderMethod.call({value: amount}).then((result) => {
+            orderMethod.call({value: amount}).then((result) => {
 
                 if (result) {
                     console.info("Creating order...");
@@ -225,7 +221,7 @@ class SynCoinService {
                 } else {
                     reject(new Error("Could not create order (simulated call returned false)."));
                 }
-            // });
+            });
         });
     }
 
@@ -236,10 +232,7 @@ class SynCoinService {
         // TODO: Send from wallet instead of account
         return new Promise((resolve, reject) => {
             let method = orderContract.methods.cancel(reference);
-
-            // TODO: Remove if call can successfully decode result
-            let result = true;
-            // method.call().then((result) => {
+            method.call().then((result) => {
                 if (result) {
                     console.info("Cancelling order...");
                     method.send()
@@ -254,7 +247,7 @@ class SynCoinService {
                 } else {
                     reject("Order can not be canceled (simulated call returned false).");
                 }
-            // });
+            });
         });
     }
 }
