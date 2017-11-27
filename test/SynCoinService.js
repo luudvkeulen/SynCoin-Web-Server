@@ -87,7 +87,15 @@ describe("SynCoinService", function () {
 
     describe("#getTransactions", () => {
         it("should be able to retrieve all transactions from a wallet", () => {
-
+           
+            return service.getTransactions(walletData.walletContract.options.address, walletData.encryptedAccount, "goodPassword").then(obj2 => {
+                
+                console.info("Transactions: " + obj2);
+                assert.ok(obj2);
+            }, error => {
+                console.info("error: " + error);
+            });
+            
         });
     });
 

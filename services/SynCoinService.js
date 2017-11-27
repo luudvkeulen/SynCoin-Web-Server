@@ -181,6 +181,8 @@ class SynCoinService {
             .then(events => {
                 console.log(events);
                 resolve(events);
+            }, error => {
+                reject(error);
             });
         });
     }
