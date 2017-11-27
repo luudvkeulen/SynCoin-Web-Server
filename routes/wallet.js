@@ -28,5 +28,38 @@ router.get('/jwtTest', passport.authenticate('jwt', { session: false }), (req, r
     res.json({ message: 'Success! You can not see this without a token' });
 });
 
+router.post('/register', (req, res) => {
+    let user = req.body;
+    if (!user.email
+        || !user.name
+        || !user.lastname
+        || !user.phone
+        || !user.company
+        || !user.address
+        || !user.password) {
+        return res.sendStatus(500);
+    }
+
+    userController
+        .create(
+            user.email,
+            user.name,
+            user.lastname,
+            user.phone,
+            user.company,
+            user.company)
+        .then(
+            walletController
+                .create(user.email, user.password)
+                .then(res.sendStatus(200))
+                .catch(() => {
+                        userController.remove(user.email);
+                        res.sendStatus(500)
+                    }
+                )
+        )
+        .catch(error => res.sendStatus(500));
+});
+
 
 module.exports = router;

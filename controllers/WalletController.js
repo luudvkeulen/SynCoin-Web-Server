@@ -2,13 +2,13 @@ const Wallet = require('./../models/wallet');
 
 function findByEmail(email) {
     return new Promise((resolve, reject) => {
-        Wallet.findOne({ 'email': email }, function (error, result) {
+        Wallet.findOne({'email': email}, function (error, result) {
             if (error) {
                 reject(error);
                 return;
             }
             if (!result) {
-                reject({ message: 'No wallet found with the given e-mail address.' })
+                reject({message: 'No wallet found with the given e-mail address.'});
                 return;
             }
             resolve(result);
@@ -16,6 +16,21 @@ function findByEmail(email) {
     });
 }
 
-module.exports = {
-    findByEmail
+function create(email, password) {
+    //TODO: call web3js method for generating wallet here
+    let newWallet = Wallet({
+        email: email,
+        encryptedAccount: null
+    });
+
+    return new Promise((resolve, reject) => {
+        newWallet.save((err) => {
+            err ? reject(err) : resolve();
+        });
+    });
 }
+
+module.exports = {
+    findByEmail,
+    create
+};

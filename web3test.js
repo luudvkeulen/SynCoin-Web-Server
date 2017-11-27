@@ -133,9 +133,9 @@ function obtainContractEvents() {
         }
     ], "0x345b63fcAA8fe182ad94564985edc0235EEC0ac4");
 
-    beerContract.events.OrderCreated({}, function (error, result) {
+    beerContract.events.allEvents({"fromBlock": 1}, function (error, result) {
         if (!error) {
-            console.log(result);
+            console.log(result.event + ": " + result.returnValues._reference);
         } else {
             console.log(error);
         }
