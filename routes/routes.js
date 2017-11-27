@@ -41,28 +41,27 @@ router.post('/register', (req, res) => {
         return res.sendStatus(500);
     }
 
-    let usererr = userController.create(
-        user.email,
-        user.name,
-        user.lastname,
-        user.phone,
-        user.company,
-        user.company);
-
-    if (usererr) {
-        return res.sendStatus(500);
-    }
-
-    walleterr = walletController.create(user.email, user.password);
-
-    if(walleterr) {
-        userController.remove(user.email);
-        return res.sendStatus(500);
-    }
-
-    return res.sendStatus(200);
+    userController
+        .create(
+            user.email,
+            user.name,
+            user.lastname,
+            user.phone,
+            user.company,
+            user.company)
+        .then(
+            walletController
+                .create(user.email, user.password)
+                .then(res.sendStatus(200))
+                .catch(() => {
+                        userController.remove(user.email);
+                        res.sendStatus(500)
+                    }
+                )
+        )
+        .catch(error => res.sendStatus(500));
 });
 
-console.log(router);
+//console.log(router);
 
 module.exports = router;

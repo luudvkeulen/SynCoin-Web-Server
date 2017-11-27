@@ -26,8 +26,10 @@ function create(email, name, lastname, phone, company, address) {
         address: address
     });
 
-    newUser.save((err) => {
-        return err;
+    return new Promise((reject, resolve) => {
+        newUser.save((err) => {
+            err ? reject(err) : resolve();
+        });
     });
 }
 
