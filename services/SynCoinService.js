@@ -80,7 +80,7 @@ class SynCoinService {
             this.web3.eth.sendTransaction({
                 from: walletCreationAddress,
                 to: accountAddress,
-                value: 1000000000000000000, // 1 ether
+                value: this.web3.utils.toWei("1", "ether"),
                 gas: 1000000,
                 gasPrice: 100000
             })
@@ -143,19 +143,26 @@ class SynCoinService {
         let walletContract = getWalletContract(this.web3, walletAddress, accountAddress);
 
         if (!data) {
-            data = "0x";
+            data = "0x00";
         }
 
+        let sendMethod = walletContract.methods.send(toAddress, amount, data);
+
         return new Promise((resolve, reject) => {
-            // TODO: Use call to see if succeeds
-            walletContract.methods.send(toAddress, amount, data)
-                .send()
-                .on('receipt', (receipt) => {
-                    resolve({transactionHash: receipt.transactionHash});
-                })
-                .on('error', (error) => {
-                    reject(error);
-                });
+            // TODO: Remove if call can successfully decode result
+            let result = true;
+            // sendMethod.call().then((result) => {
+                if (result) {
+                    sendMethod.send()
+                        .then((receipt) => {
+                            console.log("Receipt: ", receipt);
+                            resolve(receipt.transactionHash);
+                        })
+                        .catch(reject);
+                } else {
+                    reject(new Error("Could not send transaction (simulated call returned false)."));
+                }
+            // })
         });
     }
 
@@ -186,43 +193,37 @@ class SynCoinService {
      */
     getBalance(address) {
         return new Promise((resolve, reject) => {
-            this.web3.eth.getBalance(address).then(balance => {
-                resolve(balance);
-            });
+            this.web3.eth.getBalance(address)
+                .then(balance => {
+                    resolve(balance);
+                })
+                .catch(reject);
         });
     }
 
     /**
+     * @param walletAddress
      * @param encryptedAccount object
      * @param password string
      * @param amount Number
      * @param reference string
      * @returns {Promise} Resolves when the order is successfully created.
      */
-    createOrder(encryptedAccount, password, amount, reference) {
-        let accountAddress = addAccountToInMemoryWallet(this.web3, encryptedAccount, password);
-        let orderContract = getShopContract(this.web3, accountAddress);
+    createOrder(walletAddress, encryptedAccount, password, amount, reference) {
+        let shopContract = getShopContract(this.web3, walletAddress);
+        let orderMethod = shopContract.methods.order(reference);
 
-        // TODO: Send from wallet instead of account
         return new Promise((resolve, reject) => {
-            let method = orderContract.methods.order(reference);
-
-            // TODO: Uncomment to simulate transaction with call() before sending (currently not possible due to a bug in web3)
+            // TODO: Remove if call can successfully decode result
             let result = true;
-            // method.call().then((result) => {
+            // orderMethod.call({value: amount}).then((result) => {
+
                 if (result) {
                     console.info("Creating order...");
-                    method.send({value: amount})
-                        .then((receipt) => {
-                            if (receipt.events.OrderCreated) {
-                                resolve();
-                            } else {
-                                reject(new Error("Transaction was executed, but order was not created."));
-                            }
-                        })
-                        .catch(reject);
+
+                    resolve(this.sendTransaction(walletAddress, encryptedAccount, password, shopContract.address, amount, orderMethod.encodeABI()));
                 } else {
-                    reject("Could not create order (simulated call returned false).");
+                    reject(new Error("Could not create order (simulated call returned false)."));
                 }
             // });
         });
@@ -236,7 +237,7 @@ class SynCoinService {
         return new Promise((resolve, reject) => {
             let method = orderContract.methods.cancel(reference);
 
-            // TODO: Uncomment to simulate transaction with call() before sending (currently not possible due to a bug in web3)
+            // TODO: Remove if call can successfully decode result
             let result = true;
             // method.call().then((result) => {
                 if (result) {

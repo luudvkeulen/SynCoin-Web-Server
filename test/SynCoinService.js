@@ -6,7 +6,10 @@ describe("SynCoinService", function () {
     this.timeout(120000);
 
     let service;
-    let walletData;
+
+    // This is a pre-funded test account with wallet that can be used for shop calls
+    let encryptedAccount = {"version":3,"id":"eaf093b8-9faf-4526-9b7c-b5270389ab8e","address":"ef65d012cdd9e1ee33a6c311205eb9bacde01b1b","crypto":{"ciphertext":"b09fec0571b1426efcef34047ef750a6dca5c9f4390cd2eeac74a31579b9249d","cipherparams":{"iv":"335b85cf8e24ecc07a4c80afb26d69c2"},"cipher":"aes-128-ctr","kdf":"scrypt","kdfparams":{"dklen":32,"salt":"611e67cac7cfdf4153b20fa72d769ab910b851670856c1354fedb36fe12e8ca3","n":8192,"r":8,"p":1},"mac":"7bc8cae8978dd16f2e820ed75ca5df6f28393a709b138511bd0da1f1285ea29f"}};
+    let walletAddress = "0x4CA635e8050EAB8a20a0684BEa7C4Af61f5cD152";
 
     before(() => {
         service = new SynCoinService({
@@ -15,41 +18,43 @@ describe("SynCoinService", function () {
         });
     });
 
+    let createWalletResult;
+
     describe("#createWallet", () => {
         it("should be able to create a wallet", () => {
-            return service.createWallet("goodPassword").then((data) => {
-                walletData = data;
+            return service.createWallet("goodPassword").then((result) => {
+                assert.ok(result.encryptedAccount.address);
+                assert.ok(result.encryptedAccount.crypto);
+                assert.ok(result.walletContract.options.address);
 
-                assert.ok(walletData.encryptedAccount.address);
-                assert.ok(walletData.encryptedAccount.crypto);
-                assert.ok(walletData.walletContract.options.address);
+                console.info("Wallet address: " + result.walletContract.options.address);
+                console.log("Encrypted account: " + JSON.stringify(result.encryptedAccount));
 
-                console.info("Account address: 0x" + walletData.encryptedAccount.address);
-                console.info("Wallet address: " + walletData.walletContract.options.address);
+                createWalletResult = result;
             });
         });
     });
 
     describe("#verifyPassword", () => {
         it("should return false when the password is invalid", () => {
-            assert(!service.verifyPassword(walletData.encryptedAccount, "badPassword"));
+            assert(!service.verifyPassword(createWalletResult.encryptedAccount, "badPassword"));
         });
 
         it("should return true when the password is valid", () => {
-            assert(service.verifyPassword(walletData.encryptedAccount, "goodPassword"));
+            assert(service.verifyPassword(createWalletResult.encryptedAccount, "goodPassword"));
         });
     });
 
     let orderReference = "unitTestOrder" + Math.floor(Math.random() * 1000000);
-    let encryptedAccount = {"version":3,"id":"9902e8e7-d146-4186-b2ad-a039133b100f","address":"66974e872deaf3b9ef4a2eaa3689c8fd00bc70fe","crypto":{"ciphertext":"a489cb97717dc186e1baeae2207bdb191e8b9eddd2314db0bd2daa021041ae14","cipherparams":{"iv":"36208b8773412975831275203b64054e"},"cipher":"aes-128-ctr","kdf":"scrypt","kdfparams":{"dklen":32,"salt":"5f1570e38960471acdafc9d67a15999c543e86fe1fdf44f5d822f1792db96a40","n":8192,"r":8,"p":1},"mac":"d7216171c762e566655e120aa92d8b11aa6b97e57e8f02d365d6a359ebf4f504"}};
+    console.info("Test order reference: " + orderReference);
 
     describe("#createOrder", () => {
         it("should successfully create an order", () => {
-            return service.createOrder(encryptedAccount, "goodPassword", 1000, orderReference);
+            return service.createOrder(walletAddress, encryptedAccount, "goodPassword", 1000, orderReference);
         });
 
         it("should fail to create an order with the same reference twice", () => {
-            return service.createOrder(encryptedAccount, "goodPassword", 1000, orderReference)
+            return service.createOrder(walletAddress, encryptedAccount, "goodPassword", 1000, orderReference)
                 .then(() => {
                     assert(false);
                 })
@@ -73,8 +78,7 @@ describe("SynCoinService", function () {
             let amount = 999;
 
             console.info("Sending transaction...");
-            service.sendTransaction(walletData.walletContract.options.address, walletData.encryptedAccount, "goodPassword", toAddress, amount).then(obj => {
-
+            return service.sendTransaction(walletAddress, encryptedAccount, "goodPassword", toAddress, amount).then(obj => {
                 console.info("Transaction: " + obj);
                 assert.ok(obj);
             });
@@ -97,7 +101,7 @@ describe("SynCoinService", function () {
 
     describe("#getBalance", () => {
         it("should be able to get balance of an address", () => {
-            service.getBalance("0x0C01824635711e785D850244979F3b7C1161266F").then(balance => {
+            return service.getBalance(walletAddress).then(balance => {
                 console.info("Balance: " + balance);
                 assert.ok(balance);
             });
