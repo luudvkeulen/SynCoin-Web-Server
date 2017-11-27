@@ -143,7 +143,7 @@ class SynCoinService {
         let walletContract = getWalletContract(this.web3, walletAddress, accountAddress);
 
         if (!data) {
-            data = "0x00";
+            data = "0x";
         }
 
         let sendMethod = walletContract.methods.send(toAddress, amount, data);
