@@ -45,10 +45,26 @@ describe("SynCoinService", function () {
         });
     });
 
+    // Interaction with wallet
+    describe("#sendTransaction", () => {
+        it("should be able to send a transaction to a wallet", () => {
+            let toAddress = "0xD6eB2D0F2bD06e4cfbAE75215B36971CB723D875";
+            let amount = 999;
+
+            console.info("Sending transaction...");
+            return service.sendTransaction(walletAddress, encryptedAccount, "goodPassword", toAddress, amount).then(obj => {
+                console.info("Transaction: " + obj);
+                assert.ok(obj);
+            });
+        });
+    });
+
+    // Interaction with shop
     let orderReference = "unitTestOrder" + Math.floor(Math.random() * 1000000);
-    console.info("Test order reference: " + orderReference);
 
     describe("#createOrder", () => {
+        console.info("Test order reference: " + orderReference);
+
         it("should successfully create an order", () => {
             return service.createOrder(walletAddress, encryptedAccount, "goodPassword", 1000, orderReference);
         });
@@ -69,19 +85,6 @@ describe("SynCoinService", function () {
             return service.cancelOrder(encryptedAccount, "goodPassword", orderReference);
 
             // TODO: Verify that balance has been refunded?
-        });
-    });
-
-    describe("#sendTransaction", () => {
-        it("should be able to send a transaction to a wallet", () => {
-            let toAddress = "0xD6eB2D0F2bD06e4cfbAE75215B36971CB723D875";
-            let amount = 999;
-
-            console.info("Sending transaction...");
-            return service.sendTransaction(walletAddress, encryptedAccount, "goodPassword", toAddress, amount).then(obj => {
-                console.info("Transaction: " + obj);
-                assert.ok(obj);
-            });
         });
     });
 
