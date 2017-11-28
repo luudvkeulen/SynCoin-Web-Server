@@ -1,9 +1,8 @@
 const express = require('express');
 const router = express.Router();
-const User = require('./../models/user');
 
-const walletRouter = require('./wallet');
+const userRouter = require('./user');
 
-router.use(walletRouter);
+router.use(userRouter);
 
 module.exports = router;
