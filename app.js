@@ -29,6 +29,6 @@ app.use((req, res, next) => {
 });
 app.use(routes);
 
-app.get('/', (req, res) => res.send("Hello"));
+app.get('/', (req, res) => res.send("API is working."));
 
 app.listen(PORT, () => console.log(`Server: Listening on port ${PORT}`));
