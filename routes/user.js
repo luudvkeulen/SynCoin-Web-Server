@@ -28,7 +28,7 @@ router.get('/jwtTest', passport.authenticate('jwt', { session: false }), (req, r
     res.json({ message: 'Success! You can not see this without a token' });
 });
 
-router.post('/register', (req, res) => {
+router.post('/user/register', (req, res) => {
     let user = req.body;
     if (!user.email
         || !user.name
