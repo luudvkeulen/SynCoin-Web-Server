@@ -222,7 +222,7 @@ class SynCoinService {
                 if (result) {
                     console.info("Creating order...");
 
-                    resolve(this.sendTransaction(walletAddress, encryptedAccount, password, shopContract.address, amount, orderMethod.encodeABI()));
+                    resolve(this.sendTransaction(walletAddress, encryptedAccount, password, shopContractAddress, amount, orderMethod.encodeABI()));
                 } else {
                     reject(new Error("Could not create order (simulated call returned false)."));
                 }
