@@ -7,9 +7,9 @@ describe("SynCoinService", function () {
 
     let service;
 
-    // This is a pre-funded test account with wallet that can be used for shop calls
-    let encryptedAccount =  {"version":3,"id":"799b7612-3fec-468d-aa23-1c20562aa28f","address":"7d2962d453c9aab9c96aa27dd4deaf37f75111af","crypto":{"ciphertext":"2af07b452ec2c846c7a715775eaff239a809ae10fc5f60bca39ce33e9afcf815","cipherparams":{"iv":"493da42f4d3f0371d71fa4ac3b066b5a"},"cipher":"aes-128-ctr","kdf":"scrypt","kdfparams":{"dklen":32,"salt":"ea2eeec9ec6080a6428beaef9f68bcc6fd42088b03436ffe3040c02413b1adf9","n":8192,"r":8,"p":1},"mac":"61a330039c49f2fb34fabebca4eb97fc7b5572594878593b898a6b879d99e753"}};
-    let walletAddress = "0xEAEddb017Be2F9053c63fa3A5FB53c435a0F4f43";
+    // This is a pre-funded test account with an also pre-funded wallet that can be used for shop calls
+    let encryptedAccount = {"version":3,"id":"e7252871-7d70-4d9d-99a1-7b9b41f7d99a","address":"b343b203ca3b194cdf41b8c7a06eb261f1720bcd","crypto":{"ciphertext":"08d68f901e294b5581292ec13f1c489b3b80adab0d8fcb2832e0f43fd581a392","cipherparams":{"iv":"545f55bf52f8520cd46953766872623b"},"cipher":"aes-128-ctr","kdf":"scrypt","kdfparams":{"dklen":32,"salt":"fee64129bfdde0bcad168f8eb0b5ced55bd200e0d762908bcdd1316bd9073ec7","n":8192,"r":8,"p":1},"mac":"9cd6237d7ad3eb2d2a5c253b9f6b8c50174fd74078bec8fe2646503bd23dfb7d"}};
+    let walletAddress = "0x866cc9651e8C932225414F622E087ED7A0847eC0";
 
     before(() => {
         service = new SynCoinService({
@@ -48,14 +48,14 @@ describe("SynCoinService", function () {
     // Interaction with wallet
     describe("#sendTransaction", () => {
         it("should be able to send a transaction to a wallet", () => {
-            let toAddress = "0xD6eB2D0F2bD06e4cfbAE75215B36971CB723D875";
-            let amount = 999;
-
             console.info("Sending transaction...");
-            return service.sendTransaction(walletAddress, encryptedAccount, "goodPassword", toAddress, amount).then(obj => {
-                console.info("Transaction: " + obj);
-                assert.ok(obj);
-            });
+            return service.sendTransaction(walletAddress, encryptedAccount, "goodPassword",
+                "0x226e820f59bB205e14b57803F8D0105e50325a8C", 999)
+                .then((transactionHash) => {
+                    assert.ok(transactionHash);
+
+                    console.info("TransactionHash: " + transactionHash);
+                });
         });
     });
 
