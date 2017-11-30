@@ -1,14 +1,14 @@
-const Wallet = require('./../models/wallet');
+const Wallet = require('./../schemas/wallet');
 
 function findByEmail(email) {
     return new Promise((resolve, reject) => {
-        Wallet.findOne({'email': email}, function (error, result) {
+        Wallet.findOne({ 'email': email }, function (error, result) {
             if (error) {
-                reject(error);
+                reject({ message: 'Error getting wallet from database.' });
                 return;
             }
             if (!result) {
-                reject({message: 'No wallet found with the given e-mail address.'});
+                reject({ message: 'No wallet found with the given e-mail address.' });
                 return;
             }
             resolve(result);
