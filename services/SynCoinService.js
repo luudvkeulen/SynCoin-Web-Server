@@ -1,3 +1,5 @@
+const TransactionRequest = require("../models/TransactionRequest");
+
 const Web3 = require("web3");
 
 const shopContractAbi = [{"constant":true,"inputs":[],"name":"active","outputs":[{"name":"","type":"bool"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":false,"inputs":[{"name":"_reference","type":"string"}],"name":"cancel","outputs":[{"name":"","type":"bool"}],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":false,"inputs":[],"name":"toggleActive","outputs":[{"name":"","type":"bool"}],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":true,"inputs":[],"name":"orderLifetime","outputs":[{"name":"","type":"uint256"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":false,"inputs":[{"name":"_reference","type":"string"}],"name":"confirmDelivering","outputs":[{"name":"","type":"bool"}],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":false,"inputs":[],"name":"drain","outputs":[{"name":"","type":"bool"}],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":false,"inputs":[{"name":"_reference","type":"string"}],"name":"confirmReceived","outputs":[{"name":"","type":"bool"}],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":false,"inputs":[{"name":"_reference","type":"string"}],"name":"order","outputs":[{"name":"","type":"bool"}],"payable":true,"stateMutability":"payable","type":"function"},{"inputs":[{"name":"_orderLifetime","type":"uint256"}],"payable":false,"stateMutability":"nonpayable","type":"constructor"},{"anonymous":false,"inputs":[{"indexed":false,"name":"_reference","type":"string"},{"indexed":false,"name":"amount","type":"uint256"}],"name":"OrderCreated","type":"event"},{"anonymous":false,"inputs":[{"indexed":false,"name":"_reference","type":"string"}],"name":"OrderConfirmedDelivering","type":"event"},{"anonymous":false,"inputs":[{"indexed":false,"name":"_reference","type":"string"}],"name":"OrderConfirmed","type":"event"},{"anonymous":false,"inputs":[{"indexed":false,"name":"_reference","type":"string"}],"name":"OrderCanceled","type":"event"}];
@@ -219,55 +221,59 @@ class SynCoinService {
     }
 
     /**
-     * @param walletAddress
-     * @param encryptedAccount object
-     * @param password string
      * @param amount Number
      * @param reference string
-     * @returns {Promise} Resolves when the order is successfully created.
+     * @returns TransactionRequest
      */
-    createOrder(walletAddress, encryptedAccount, password, amount, reference) {
-        let shopContract = getShopContract(this.web3, walletAddress);
-        let orderMethod = shopContract.methods.order(reference);
+    getOrderRequest(amount, reference) {
+        let shopContract = getShopContract(this.web3);
+        let method = shopContract.methods.order(reference);
 
-        return new Promise((resolve, reject) => {
-            orderMethod.call({value: amount}).then((result) => {
-
-                if (result) {
-                    console.info("Creating order...");
-
-                    resolve(this.sendTransaction(walletAddress, encryptedAccount, password, shopContractAddress, amount, orderMethod.encodeABI()));
-                } else {
-                    reject(new Error("Could not create order (simulated call returned false)."));
-                }
-            });
-        });
+        return new TransactionRequest(shopContract.options.address, amount, method.encodeABI());
     }
 
-    cancelOrder(encryptedAccount, password, reference) {
-        let accountAddress = addAccountToInMemoryWallet(this.web3, encryptedAccount, password);
-        let orderContract = getShopContract(this.web3, accountAddress);
+    /**
+     * @param reference string
+     * @returns TransactionRequest
+     */
+    getCancelRequest(reference) {
+        let shopContract = getShopContract(this.web3);
+        let method = shopContract.methods.cancel(reference);
 
-        // TODO: Send from wallet instead of account
-        return new Promise((resolve, reject) => {
-            let method = orderContract.methods.cancel(reference);
-            method.call().then((result) => {
-                if (result) {
-                    console.info("Cancelling order...");
-                    method.send()
-                        .then((receipt) => {
-                            if (receipt.events.OrderCanceled) {
-                                resolve();
-                            } else {
-                                reject(new Error("Transaction was executed, but order was not canceled."));
-                            }
-                        })
-                        .catch(reject);
-                } else {
-                    reject("Order can not be canceled (simulated call returned false).");
-                }
-            });
-        });
+        return new TransactionRequest(shopContract.options.address, 0, method.encodeABI());
+    }
+
+    /**
+     * @param reference string
+     * @returns TransactionRequest
+     */
+    getConfirmDeliveringRequest(reference) {
+        let shopContract = getShopContract(this.web3);
+        let method = shopContract.methods.confirmDelivering(reference);
+
+        return new TransactionRequest(shopContract.options.address, 0, method.encodeABI());
+    }
+
+    /**
+     * @param reference string
+     * @returns TransactionRequest
+     */
+    getConfirmReceivedRequest(reference) {
+        let shopContract = getShopContract(this.web3);
+        let method = shopContract.methods.confirmReceived(reference);
+
+        return new TransactionRequest(shopContract.options.address, 0, method.encodeABI());
+    }
+
+    /**
+     * @param reference string
+     * @returns TransactionRequest
+     */
+    getDrainRequest(reference) {
+        let shopContract = getShopContract(this.web3);
+        let method = shopContract.methods.drain();
+
+        return new TransactionRequest(shopContract.options.address, 0, method.encodeABI());
     }
 }
 
