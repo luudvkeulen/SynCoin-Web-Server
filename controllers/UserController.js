@@ -1,4 +1,4 @@
-const User = require('./../models/user');
+const User = require('./../schemas/user');
 
 function findByEmail(email) {
     return new Promise((resolve, reject) => {
