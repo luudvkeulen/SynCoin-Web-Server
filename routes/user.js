@@ -47,7 +47,7 @@ router.post('/user/register', (req, res) => {
             user.lastname,
             user.phone,
             user.company,
-            user.company)
+            user.address)
         .then(
             walletController
                 .create(user.email, user.password)
