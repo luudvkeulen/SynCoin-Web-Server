@@ -1,4 +1,5 @@
 const TransactionRequest = require("../models/TransactionRequest");
+const WalletTransaction = require("../models/WalletTransaction");
 
 const Web3 = require("web3");
 
@@ -8,8 +9,6 @@ const walletContractAbi = [{"constant":false,"inputs":[{"name":"receiver","type"
 const walletContractData = "0x60606040526040516020806102ee83398101604052808051906020019091905050806000806101000a81548173ffffffffffffffffffffffffffffffffffffffff021916908373ffffffffffffffffffffffffffffffffffffffff1602179055505061027e806100706000396000f300606060405260043610610041576000357c0100000000000000000000000000000000000000000000000000000000900463ffffffff1680639bd9bbc6146100b8575b60003411156100b6577fea8894086f544a14fafefe000f478d734be3087de78435eb799669d5191a3acd3334604051808373ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff1681526020018281526020019250505060405180910390a15b005b34156100c357600080fd5b61010c600480803573ffffffffffffffffffffffffffffffffffffffff169060200190919080359060200190919080359060200190820180359060200191909192905050610128565b604051808260ff1660ff16815260200191505060405180910390f35b60008060009054906101000a900473ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff163373ffffffffffffffffffffffffffffffffffffffff16141515610189576002905061024a565b8473ffffffffffffffffffffffffffffffffffffffff168484846040518083838082843782019150509250505060006040518083038185876187965a03f19250505015156101da576003905061024a565b7f4970bf8595442008a41b189fc026906b953e2a419e3029e6d0d6ce02a33ba85d8585604051808373ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff1681526020018281526020019250505060405180910390a1600190505b9493505050505600a165627a7a72305820cc2141c7c336f47462f4cbacc46a8e4de0c617a7df76e816b28cc3f9f841bed70029";
 const web3Address = "ws://localhost:8546";
 
-// TODO: How to confirm delivering, API?
-
 class SynCoinService {
     /**
      * @param walletCreationAccount {{address: string, privateKey: string}} Unencrypted account with funds to be used for customer wallet creation.
@@ -17,6 +16,7 @@ class SynCoinService {
     constructor(walletCreationAccount) {
         this.web3 = new Web3(web3Address);
         this.walletCreationAccount = walletCreationAccount;
+        this.shopContractAddress = shopContractAddress;
     }
 
     /**
@@ -117,11 +117,13 @@ class SynCoinService {
                         sendMethod
                             .send()
                             .then((receipt) => {
+                                console.log(receipt);
+
                                 if (receipt.events.TransactionSent) {
                                     resolve(receipt.transactionHash);
                                 } else {
                                     console.log(receipt);
-                                    reject(new Error("Transaction was mined but no event was created."));
+                                    reject(new Error("WalletTransaction was mined but no event was created."));
                                 }
                             })
                             .catch(reject);
@@ -141,22 +143,49 @@ class SynCoinService {
     }
 
     /**
+     * Performs the transaction described by the given TransactionRequest from the given wallet.
+     *
      * @param walletAddress string
-     * @returns {Promise} Resolves when events are received.
+     * @param transactionRequest TransactionRequest
+     * @param encryptedAccount object
+     * @param password string
+     * @returns {Promise}|{transactionHash: string} Resolves when the tx is broadcasted to blockchain.
      */
-    getTransactions(walletAddress){
+    sendTransactionRequest(walletAddress, encryptedAccount, password, transactionRequest) {
+        return this.sendTransaction(
+            walletAddress, encryptedAccount, password, transactionRequest.address, transactionRequest.amount,
+            transactionRequest.data
+        );
+    }
+
+    /**
+     * Returns the transactions of a wallet.
+     *
+     * @param walletAddress string
+     * @returns {Promise}|WalletTransaction[]
+     */
+    getWalletTransactions(walletAddress){
         let walletContract = this._getWalletContract(walletAddress);
 
-        // TODO: Format the events nicely
-        return new Promise((resolve, reject) => {
-            walletContract.getPastEvents('allEvents', {fromBlock: 0, toBlock: 'latest'})
-            .then(events => {
-                console.log(events);
-                resolve(events);
-            }, error => {
-                reject(error);
+        return walletContract.getPastEvents('allEvents', {
+            fromBlock: 0,
+            filter: {
+                event: ['TransactionSent', 'TransactionReceived']
+            }
+        })
+            .then((events) => {
+                // Map the obtained events into WalletTransaction objects
+                return events.map((event) => {
+                    let sent = (event.event == 'TransactionSent');
+
+                    return new WalletTransaction(
+                        (sent ? event.returnValues.receiver : event.returnValues.sender),
+                        (sent ? -event.returnValues.amount : event.returnValues.amount),
+                        event.blockNumber, // TODO: eth.getBlock(blockNumber) -> time
+                        event.transactionHash
+                    );
+                });
             });
-        });
     }
 
     /**
@@ -174,11 +203,11 @@ class SynCoinService {
     }
 
     /**
-     * @param amount Number
      * @param reference string
+     * @param amount Number
      * @returns TransactionRequest
      */
-    getOrderRequest(amount, reference) {
+    getOrderRequest(reference, amount) {
         let shopContract = this._getShopContract();
         let method = shopContract.methods.order(reference);
 

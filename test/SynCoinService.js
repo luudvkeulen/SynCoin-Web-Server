@@ -59,57 +59,78 @@ describe("SynCoinService", function () {
         });
     });
 
+    describe("#getWalletTransactions", () => {
+        it("should be able to retrieve all transactions from a wallet", () => {
+            return service.getWalletTransactions(walletAddress)
+                .then((transactions) => {
+                    assert(transactions.length > 0);
+
+                    console.info("First transaction:", transactions[0]);
+
+                    assert.ok(transactions[0].counterAddress);
+                });
+        });
+    });
+
+    describe("#getBalance", () => {
+        it("should be able to get balance of an account", () => {
+            return service.getBalance(encryptedAccount.address)
+                .then(balance => {
+                    console.info("Account balance:", balance);
+                    assert(balance > 0);
+                });
+        });
+
+        it("should be able to get balance of a wallet", () => {
+            return service.getBalance(walletAddress)
+                .then(balance => {
+                    console.info("Wallet balance:", balance);
+                    assert(balance > 0);
+                });
+        });
+    });
+
     // Interaction with shop
     let orderReference = "unitTestOrder" + Math.floor(Math.random() * 1000000);
 
     describe("#createOrder", () => {
         console.info("Test order reference: " + orderReference);
 
+        let orderRequest;
+
+        it("should successfully create order transaction request", () => {
+            orderRequest = service.getOrderRequest(orderReference, 10);
+            console.info("Order transaction request:", orderRequest);
+
+            assert(orderRequest.address);
+            assert(orderRequest.amount == 10);
+            assert(orderRequest.data);
+        });
+
         it("should successfully create an order", () => {
-            return service.createOrder(walletAddress, encryptedAccount, "goodPassword", 1000, orderReference);
+            return service.sendTransactionRequest(walletAddress, encryptedAccount, "goodPassword", orderRequest);
         });
 
-        it("should fail to create an order with the same reference twice", () => {
-            return service.createOrder(walletAddress, encryptedAccount, "goodPassword", 1000, orderReference)
-                .then(() => {
-                    assert(false);
-                })
-                .catch(() => {
-                    assert(true);
-                });
-        });
+        // TODO: Rework from here (wallet to shop interaction after creating data
+        //
+        // it("should fail to create an order with the same reference twice", () => {
+        //     return service.createOrder(walletAddress, encryptedAccount, "goodPassword", 1000, orderReference)
+        //         .then(() => {
+        //             assert(false);
+        //         })
+        //         .catch(() => {
+        //             assert(true);
+        //         });
+        // });
     });
 
-    describe("#cancelOrder", () => {
-        it("should be able to cancel the order immediately after creating it", () => {
-            return service.cancelOrder(encryptedAccount, "goodPassword", orderReference);
-
-            // TODO: Verify that balance has been refunded?
-        });
-    });
-
-    describe("#getTransactions", () => {
-        it("should be able to retrieve all transactions from a wallet", () => {
-           
-            return service.getTransactions(walletData.walletContract.options.address, walletData.encryptedAccount, "goodPassword").then(obj2 => {
-                
-                console.info("Transactions: " + obj2);
-                assert.ok(obj2);
-            }, error => {
-                console.info("error: " + error);
-            });
-            
-        });
-    });
-
-    describe("#getBalance", () => {
-        it("should be able to get balance of an address", () => {
-            return service.getBalance(walletAddress).then(balance => {
-                console.info("Balance: " + balance);
-                assert.ok(balance);
-            });
-        });
-    });
+    // describe("#cancelOrder", () => {
+    //     it("should be able to cancel the order immediately after creating it", () => {
+    //         return service.cancelOrder(encryptedAccount, "goodPassword", orderReference);
+    //
+    //         // TODO: Verify that balance has been refunded?
+    //     });
+    // });
 
     // TODO: Test create into webshop confirm into not being able to cancel
     // TODO: Test create into webshop confirm into customer confirm
