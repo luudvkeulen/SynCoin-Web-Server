@@ -4,15 +4,20 @@ const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
 
 const env = process.env.NODE_ENV || 'dev';
-const PORT = process.env.port || 8080;
 
 require('dotenv').config({ path: env + '.env' });
+
+const PORT = process.env.PORT || 8080;
 
 const { passport } = require('./jwt-config');
 const routes = require('./routes/routes');
 
 const SynCoinService = require('./services/SynCoinService');
-const serviceInstance = new SynCoinService();
+const serviceInstance = new SynCoinService(
+    process.env.WEB3_ADDRESS,
+    process.env.WALLET_CREATION_KEY,
+    process.env.SHOP_CONTRACT_ADDRESS
+);
 
 mongoose.Promise = global.Promise;
 mongoose.connect(`mongodb://${process.env.DB_HOST}:${process.env.DB_PORT}/${process.env.DB_NAME}`, { useMongoClient: true, user: process.env.DB_USER, pass: process.env.DB_PASS })

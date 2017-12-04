@@ -1,6 +1,8 @@
 const assert = require("assert");
 const SynCoinService = require("../services/SynCoinService");
 
+require('dotenv').config({ path: 'dev.env' });
+
 describe("SynCoinService", function () {
     // Contract creation takes a while (needs to be mined), set a high timeout
     this.timeout(120000);
@@ -12,10 +14,11 @@ describe("SynCoinService", function () {
     let walletAddress = "0x866cc9651e8C932225414F622E087ED7A0847eC0";
 
     before(() => {
-        service = new SynCoinService({
-            "address": "0x66974E872deaf3B9eF4a2EAa3689c8Fd00bC70FE",
-            "privateKey": "0x80a302d42612a1b0767472e165a7230da7a06e0e75f94a6885565bf46d97e65f"
-        });
+        service = new SynCoinService(
+            process.env.WEB3_ADDRESS,
+            process.env.WALLET_CREATION_KEY,
+            process.env.SHOP_CONTRACT_ADDRESS
+        );
     });
 
     let createWalletResult;
