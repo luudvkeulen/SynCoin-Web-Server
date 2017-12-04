@@ -14,7 +14,7 @@ describe("SynCoinService", function () {
     let walletAddress = "0x866cc9651e8C932225414F622E087ED7A0847eC0";
 
     before(() => {
-        service = new SynCoinService(
+        service = SynCoinService(
             process.env.WEB3_ADDRESS,
             process.env.WALLET_CREATION_KEY,
             process.env.SHOP_CONTRACT_ADDRESS
