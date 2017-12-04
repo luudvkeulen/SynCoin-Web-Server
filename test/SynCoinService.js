@@ -135,6 +135,30 @@ describe("SynCoinService", function () {
     //     });
     // });
 
+    describe("#getOrderStatusUpdates", () => {
+        it("should be able to find some global order status updates", () => {
+            return service.getOrderStatusUpdates()
+                .then((updates) => {
+                    assert(updates.length > 0);
+
+                    console.info("Earliest update:", updates[0]);
+
+                    return true;
+                });
+        });
+
+        it("should be able to find order status updates for the created unit test order", () => {
+            return service.getOrderStatusUpdates(orderReference)
+                .then((updates) => {
+                    console.log(updates);
+
+                    assert(updates.length > 0);
+
+                    return true;
+                });
+        });
+    });
+
     // TODO: Test create into webshop confirm into not being able to cancel
     // TODO: Test create into webshop confirm into customer confirm
 });
