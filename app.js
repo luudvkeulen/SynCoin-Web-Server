@@ -43,11 +43,6 @@ app.use(routes);
 
 app.get('/', (req, res) => res.send("API is working."));
 
-// api
-let wallet = require('./routes/wallet');
-
-app.use('/api', wallet);
-
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {
     let err = new Error('Not Found');
