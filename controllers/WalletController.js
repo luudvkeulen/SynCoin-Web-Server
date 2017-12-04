@@ -1,36 +1,53 @@
-const Wallet = require('./../schemas/wallet');
+const syncoinService = require("./services/SynCoinService");
 
-function findByEmail(email) {
-    return new Promise((resolve, reject) => {
-        Wallet.findOne({ 'email': email }, function (error, result) {
-            if (error) {
-                reject({ message: 'Error getting wallet from database.' });
-                return;
-            }
-            if (!result) {
-                reject({ message: 'No wallet found with the given e-mail address.' });
-                return;
-            }
-            resolve(result);
-        });
+exports.createWallet = function (req, res) {
+    return res.status(200).send("wallet enzo");
+};
+
+exports.getTransactions = function (req, res) {
+    syncoinService.getTransactions(req.query.walletAddress, req.query.encryptedAccount, req.query.password).then(value => {
+        return res.status(200).send(value);
+    }, error => {
+        return res.status(500).send(error);
     });
-}
+};
 
-function create(email, password) {
-    //TODO: call web3js method for generating wallet here
-    let newWallet = Wallet({
-        email: email,
-        encryptedAccount: null
+exports.getBalance = function (req, res) {
+    syncoinService.getBalance(req.query.address).then(value => {
+        return res.status(200).send(value);
+    }, error => {
+        return res.status(500).send(error);
     });
+};
 
-    return new Promise((resolve, reject) => {
-        newWallet.save((err) => {
-            err ? reject(err) : resolve();
-        });
+exports.sendTransaction = function (req, res) {
+    syncoinService.sendTransaction(req.query.walletAddress, req.query.encryptedAccount, req.query.password, req.query.toAddress, req.query.amount).then(value => {
+        return res.status(200).send(value);
+    }, error => {
+        return res.status(500).send(error);
     });
-}
+};
 
-module.exports = {
-    findByEmail,
-    create
+exports.createOrder = function (req, res) {
+    syncoinService.createOrder(req.query.orderAddress, req.query.encryptedAccount, req.query.password, req.query.amount, req.query.reference).then(value => {
+        return res.status(200).send(value);
+    }, error => {
+        return res.status(500).send(error);
+    });
+};
+
+exports.cancelOrder = function (req, res) {
+    syncoinService.cancelOrder(req.query.orderAddress, req.query.encryptedAccount, req.query.password, req.query.reference).then(value => {
+        return res.status(200).send(value);
+    }, error => {
+        return res.status(500).send(error);
+    });
+};
+
+exports.confirmOrder = function (req, res) {
+
+};
+
+exports.drainOrder = function (req, res) {
+
 };

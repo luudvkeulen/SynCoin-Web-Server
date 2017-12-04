@@ -4,7 +4,7 @@ const router = express.Router();
 const jwt = require('jsonwebtoken');
 const { passport, jwtOptions } = require('./../jwt-config');
 
-const walletController = require('./../controllers/WalletController');
+const walletController = require('../controllers/WalletController');
 const userController = require('./../controllers/UserController');
 
 router.post('/user/login', (req, res, next) => {
