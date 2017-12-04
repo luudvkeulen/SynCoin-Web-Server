@@ -13,7 +13,7 @@ const { passport } = require('./jwt-config');
 const routes = require('./routes/routes');
 
 const SynCoinService = require('./services/SynCoinService');
-const serviceInstance = new SynCoinService(
+const serviceInstance = SynCoinService(
     process.env.WEB3_ADDRESS,
     process.env.WALLET_CREATION_KEY,
     process.env.SHOP_CONTRACT_ADDRESS
