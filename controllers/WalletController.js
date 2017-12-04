@@ -37,7 +37,7 @@ exports.sendTransaction = function (req, res) {
             return res.status(500).send(error);
         });
         
-    }).catch((reject) => { return res.status(500).send(error) });
+    }).catch((reject) => { return res.status(500).send(reject) });
 };
 
 exports.createOrder = function (req, res) {
@@ -47,7 +47,7 @@ exports.createOrder = function (req, res) {
         }, error => {
             return res.status(500).send(error);
         });    
-    }).catch((reject) => { return res.status(500).send(error) });
+    }).catch((reject) => { return res.status(500).send(reject) });
 };
 
 exports.cancelOrder = function (req, res) {
@@ -57,7 +57,7 @@ exports.cancelOrder = function (req, res) {
         }, error => {
             return res.status(500).send(error);
         });
-    }).catch((reject) => { return res.status(500).send(error) });
+    }).catch((reject) => { return res.status(500).send(reject) });
 };
 
 exports.confirmReceived = function (req, res) {
@@ -67,7 +67,7 @@ exports.confirmReceived = function (req, res) {
         }, error => {
             return res.status(500).send(error);
         });
-    }).catch((reject) => { return res.status(500).send(error) });
+    }).catch((reject) => { return res.status(500).send(reject) });
 };
 
 exports.confirmDelivering = function (req, res) {
@@ -77,7 +77,7 @@ exports.confirmDelivering = function (req, res) {
         }, error => {
             return res.status(500).send(error);
         });
-    }).catch((reject) => { return res.status(500).send(error) });
+    }).catch((reject) => { return res.status(500).send(reject) });
 };
 
 exports.drainOrder = function (req, res) {
@@ -87,7 +87,7 @@ exports.drainOrder = function (req, res) {
         }, error => {
             return res.status(500).send(error);
         });
-    }).catch((reject) => { return res.status(500).send(error) });
+    }).catch((reject) => { return res.status(500).send(reject) });
 };
 
 getEncryptedAccount = function (email) {
