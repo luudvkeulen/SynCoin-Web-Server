@@ -114,26 +114,21 @@ describe("SynCoinService", function () {
             return service.sendTransactionRequest(walletAddress, encryptedAccount, "goodPassword", orderRequest);
         });
 
-        // TODO: Rework from here (wallet to shop interaction after creating data
-        //
-        // it("should fail to create an order with the same reference twice", () => {
-        //     return service.createOrder(walletAddress, encryptedAccount, "goodPassword", 1000, orderReference)
-        //         .then(() => {
-        //             assert(false);
-        //         })
-        //         .catch(() => {
-        //             assert(true);
-        //         });
-        // });
+        it("should fail to create an order with the same reference twice", () => {
+            return service.sendTransactionRequest(walletAddress, encryptedAccount, "goodPassword", orderRequest)
+                .then(() => assert.fail())
+                .catch(() => true);
+        });
     });
 
-    // describe("#cancelOrder", () => {
-    //     it("should be able to cancel the order immediately after creating it", () => {
-    //         return service.cancelOrder(encryptedAccount, "goodPassword", orderReference);
-    //
-    //         // TODO: Verify that balance has been refunded?
-    //     });
-    // });
+    describe("#cancelOrder", () => {
+        it("should be able to cancel the order immediately after creating it", () => {
+            let cancelRequest = service.getCancelRequest(orderReference);
+            return service.sendTransactionRequest(walletAddress, encryptedAccount, "goodPassword", cancelRequest);
+
+            // TODO: Verify that balance has been refunded?
+        });
+    });
 
     describe("#getOrderStatusUpdates", () => {
         it("should be able to find some global order status updates", () => {

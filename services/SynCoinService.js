@@ -266,9 +266,7 @@ module.exports = function SynCoinService(web3Address, walletCreationAccount, sho
             .then((events) => {
                 // Filter and map the obtained events into OrderStatuses
                 return events
-                    .filter((event) => {
-                        return !reference || event.returnValues.reference == reference;
-                    })
+                    .filter((event) => !reference || event.returnValues.reference == reference)
                     .map((event) => {
                         let status = OrderStatusUpdate.UNKNOWN;
 
@@ -361,5 +359,5 @@ module.exports = function SynCoinService(web3Address, walletCreationAccount, sho
         getConfirmReceivedRequest,
         getDrainRequest,
         getOrderStatusUpdates
-    }
+    };
 };
