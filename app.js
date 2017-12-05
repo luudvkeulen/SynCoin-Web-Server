@@ -24,8 +24,6 @@ mongoose.connect(`mongodb://${process.env.DB_HOST}:${process.env.DB_PORT}/${proc
     .then(() => console.log('MongoDB: connected'),
     error => console.log('MongoDB: error while connecting ', error));
 
-    
-app.set('view engine', 'jade');  
 // Middleware
 app.use(function (req, res, next) {
     res.setHeader('Access-Control-Allow-Origin', '*');
