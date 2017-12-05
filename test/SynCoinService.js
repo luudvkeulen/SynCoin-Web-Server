@@ -13,6 +13,8 @@ describe("SynCoinService", function () {
     let encryptedAccount = {"version":3,"id":"e7252871-7d70-4d9d-99a1-7b9b41f7d99a","address":"b343b203ca3b194cdf41b8c7a06eb261f1720bcd","crypto":{"ciphertext":"08d68f901e294b5581292ec13f1c489b3b80adab0d8fcb2832e0f43fd581a392","cipherparams":{"iv":"545f55bf52f8520cd46953766872623b"},"cipher":"aes-128-ctr","kdf":"scrypt","kdfparams":{"dklen":32,"salt":"fee64129bfdde0bcad168f8eb0b5ced55bd200e0d762908bcdd1316bd9073ec7","n":8192,"r":8,"p":1},"mac":"9cd6237d7ad3eb2d2a5c253b9f6b8c50174fd74078bec8fe2646503bd23dfb7d"}};
     let walletAddress = "0x866cc9651e8C932225414F622E087ED7A0847eC0";
 
+    // TODO: Owner of shop contract should be configured to a wallet address
+
     before(() => {
         service = SynCoinService(
             process.env.WEB3_ADDRESS,
