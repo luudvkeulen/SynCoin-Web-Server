@@ -219,3 +219,4 @@ describe("SynCoinService", function () {
 });
 
 // TODO: Test that shop should not be able to call confirmReceived or cancel (stretch)
+// TODO: Confirmed received can run before confirmed delivered
