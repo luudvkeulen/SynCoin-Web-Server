@@ -75,6 +75,8 @@ describe("SynCoinService", function () {
         });
     });
 
+    let walletStartBalance;
+
     describe("#getBalance", () => {
         it("should be able to get balance of an account", () => {
             return service.getBalance(encryptedAccount.address)
@@ -89,6 +91,8 @@ describe("SynCoinService", function () {
                 .then(balance => {
                     console.info("Wallet balance:", balance);
                     assert(balance > 0);
+
+                    walletStartBalance = balance;
                 });
         });
     });
@@ -123,10 +127,39 @@ describe("SynCoinService", function () {
 
     describe("#cancelOrder", () => {
         it("should be able to cancel the order immediately after creating it", () => {
-            let cancelRequest = service.getCancelRequest(orderReference);
-            return service.sendTransactionRequest(walletAddress, encryptedAccount, "goodPassword", cancelRequest);
+            let request = service.getCancelRequest(orderReference);
+            return service.sendTransactionRequest(walletAddress, encryptedAccount, "goodPassword", request);
+        });
 
-            // TODO: Verify that balance has been refunded?
+        it("should refund the spent currency", () => {
+            assert(walletStartBalance < service.getBalance(walletAddress));
+        });
+    });
+
+    describe("#confirmDelivering", () => {
+        it("should not be able to confirm received before delivering", () => {
+            let request = service.getConfirmReceivedRequest(orderReference);
+            return service.sendTransactionRequest(walletAddress, encryptedAccount, "goodPassword", request)
+                .then(assert.fail)
+                .catch(() => true);
+        });
+
+        it("should not be able to confirm delivering from the customer", () => {
+            let request = service.getConfirmDeliveringRequest(orderReference);
+            return service.sendTransactionRequest(walletAddress, encryptedAccount, "goodPassword", request)
+                .then(assert.fail)
+                .catch(() => true);
+        });
+
+        it.skip("should be able to confirm delivering as the shop owner", () => {
+            // TODO: Hard code shop owner in tests?
+        });
+    });
+
+    describe("#confirmReceived", () => {
+        it("should successfully confirm received after being confirmed delivering", () => {
+            let request = service.getConfirmReceivedRequest(orderReference);
+            return service.sendTransactionRequest(walletAddress, encryptedAccount, "goodPassword", request);
         });
     });
 
@@ -153,7 +186,4 @@ describe("SynCoinService", function () {
                 });
         });
     });
-
-    // TODO: Test create into webshop confirm into not being able to cancel
-    // TODO: Test create into webshop confirm into customer confirm
 });

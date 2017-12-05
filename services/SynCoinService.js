@@ -20,7 +20,7 @@ module.exports = function SynCoinService(web3Address, walletCreationAccount, sho
      * Funds the account with some dough to perform transactions.
      *
      * @param {string} password
-     * @returns {Promise|{encryptedAccount: object, walletContract: object}}
+     * @returns {Promise|{encryptedAccount: Account, walletContract: Contract}}
      */
     function createWallet(password) {
         // Create account to own the wallet
