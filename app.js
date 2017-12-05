@@ -22,7 +22,7 @@ const serviceInstance = SynCoinService(
 mongoose.Promise = global.Promise;
 mongoose.connect(`mongodb://${process.env.DB_HOST}:${process.env.DB_PORT}/${process.env.DB_NAME}`, { useMongoClient: true, user: process.env.DB_USER, pass: process.env.DB_PASS })
     .then(() => console.log('MongoDB: connected'),
-    error => console.log('MongoDB: error while connecting ', error))
+    error => console.log('MongoDB: error while connecting ', error));
 
 // Middleware
 app.use(function (req, res, next) {
@@ -39,6 +39,8 @@ app.use((req, res, next) => {
     req.synCoinService = serviceInstance;
     next();
 });
+
+
 app.use(routes);
 
 app.get('/', (req, res) => res.send("API is working."));
@@ -58,7 +60,7 @@ app.use(function (err, req, res, next) {
 
     // render the error page
     res.status(err.status || 500);
-    res.render('error');
+    res.send(err.message);
 });
 
 app.listen(PORT, () => console.log(`Server: Listening on port ${PORT}`));
