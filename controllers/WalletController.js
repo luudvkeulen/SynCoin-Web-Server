@@ -1,20 +1,23 @@
-const syncoinService = require("../services/SynCoinService");
+const Wallet = require('./../schemas/wallet');
 
-exports.createWallet = function (req, res) {
-    return res.status(200).send("wallet enzo");
-};
-
-exports.getTransactions = function (req, res) {
-    syncoinService.getTransactions(req.query.walletAddress, req.query.encryptedAccount, req.query.password).then(value => {
-        return res.status(200).send(value);
-    }, error => {
-        return res.status(500).send(error);
-    });
+exports.verifyPassword = function (req, res) {po
+    getEncryptedAccount(req.query.email).then((encryptedAccount) => {
+        return res.status(200).send(req.synCoinService.verifyPassword(encryptedAccount, req.query.password));
+    }).catch((reject) => { return res.status(500).send(reject) });
 };
 
 exports.getBalance = function (req, res) {
-    let email = req.user.email;
-    syncoinService.getBalance(req.query.address).then(value => {
+    getEncryptedAccount(req.query.email).then((encryptedAccount) => {
+        req.synCoinService.getBalance(encryptedAccount.address).then(value => {
+            return res.status(200).send(value);
+        }, error => {
+            return res.status(500).send(error);
+        });
+    }).catch((reject) => { return res.status(500).send(reject) });
+};
+
+exports.walletTransactions = function (req, res) {
+    req.synCoinService.getWalletTransactions(req.query.address).then(value => {
         return res.status(200).send(value);
     }, error => {
         return res.status(500).send(error);
@@ -22,33 +25,71 @@ exports.getBalance = function (req, res) {
 };
 
 exports.sendTransaction = function (req, res) {
-    syncoinService.sendTransaction(req.query.walletAddress, req.query.encryptedAccount, req.query.password, req.query.toAddress, req.query.amount).then(value => {
-        return res.status(200).send(value);
-    }, error => {
-        return res.status(500).send(error);
-    });
+    getEncryptedAccount(req.query.email).then((encryptedAccount) => {
+        req.synCoinService.sendTransaction(req.query.walletAddress, encryptedAccount, req.query.password, req.synCoinService.sendTransactionRequest(req.query.walletAddress, req.query.encryptedAccount, req.query.password, req.query.transactionRequest)).then(value => {
+            return res.status(200).send(value);
+        }, error => {
+            return res.status(500).send(error);
+        });
+        
+    }).catch((reject) => { return res.status(500).send(reject) });
 };
 
 exports.createOrder = function (req, res) {
-    syncoinService.createOrder(req.query.orderAddress, req.query.encryptedAccount, req.query.password, req.query.amount, req.query.reference).then(value => {
-        return res.status(200).send(value);
-    }, error => {
-        return res.status(500).send(error);
-    });
+    getEncryptedAccount(req.query.email).then((encryptedAccount) => {
+        req.synCoinService.sendTransaction(req.query.walletAddress, encryptedAccount, req.query.password, req.synCoinService.getOrderRequest(req.query.reference, req.query.amount)).then(value => {
+            return res.status(200).send(value);
+        }, error => {
+            return res.status(500).send(error);
+        });    
+    }).catch((reject) => { return res.status(500).send(reject) });
 };
 
 exports.cancelOrder = function (req, res) {
-    syncoinService.cancelOrder(req.query.orderAddress, req.query.encryptedAccount, req.query.password, req.query.reference).then(value => {
-        return res.status(200).send(value);
-    }, error => {
-        return res.status(500).send(error);
-    });
+    getEncryptedAccount(req.query.email).then((encryptedAccount) => {
+        req.synCoinService.sendTransaction(req.query.walletAddress, encryptedAccount, req.query.password, req.synCoinService.getCancelRequest(req.query.reference)).then(value => {
+            return res.status(200).send(value);
+        }, error => {
+            return res.status(500).send(error);
+        });
+    }).catch((reject) => { return res.status(500).send(reject) });
 };
 
-exports.confirmOrder = function (req, res) {
+exports.confirmReceived = function (req, res) {
+    getEncryptedAccount(req.query.email).then((encryptedAccount) => {
+        req.synCoinService.sendTransaction(req.query.walletAddress, encryptedAccount, req.query.password, req.synCoinService.getConfirmReceivedRequest(req.query.reference)).then(value => {
+            return res.status(200).send(value);
+        }, error => {
+            return res.status(500).send(error);
+        });
+    }).catch((reject) => { return res.status(500).send(reject) });
+};
 
+exports.confirmDelivering = function (req, res) {
+    getEncryptedAccount(req.query.email).then((encryptedAccount) => {
+        req.synCoinService.sendTransaction(req.query.walletAddress, encryptedAccount, req.query.password, req.synCoinService.getConfirmDeliveringRequest(req.query.reference)).then(value => {
+            return res.status(200).send(value);
+        }, error => {
+            return res.status(500).send(error);
+        });
+    }).catch((reject) => { return res.status(500).send(reject) });
 };
 
 exports.drainOrder = function (req, res) {
+    getEncryptedAccount(req.query.email).then((encryptedAccount) => {
+        req.synCoinService.sendTransaction(req.query.walletAddress, encryptedAccount, req.query.password, req.synCoinService.getDrainRequest(req.query.reference)).then(value => {
+            return res.status(200).send(value);
+        }, error => {
+            return res.status(500).send(error);
+        });
+    }).catch((reject) => { return res.status(500).send(reject) });
+};
 
+getEncryptedAccount = function (email) {
+    return new Promise((resolve, reject) => {
+        Wallet.findOne({ email: email }, (err, wallet) => {
+            if (err) reject(err);
+            resolve(wallet.encryptedAccount);
+        });
+    });
 };

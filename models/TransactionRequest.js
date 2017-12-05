@@ -1,13 +1,13 @@
 class TransactionRequest {
     /**
-     * @param address string
-     * @param amount Number
-     * @param data string
+     * @param {string} address
+     * @param {Number} amount
+     * @param {string} data 0x...
      */
     constructor(address, amount, data) {
         this.address = address;
         this.amount = amount;
-        this.data = data;
+        this.data = data ? data : '0x';
     }
 }
 

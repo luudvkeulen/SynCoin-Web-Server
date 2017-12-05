@@ -15,4 +15,12 @@ router.get(prefix + '/tx', walletController.getTransactions);
 
 router.get(prefix + '/balance', passport.authenticate('jwt', {session: false}), walletController.getBalance);
 
+router.post('/tx',  passport.authenticate('jwt', { session: false }), walletController.sendTransaction);
+
+router.get('/tx', passport.authenticate('jwt', { session: false }), walletController.walletTransactions);
+
+router.get('/balance', passport.authenticate('jwt', { session: false }), walletController.getBalance);
+
+router.get('/verifypassword', passport.authenticate('jwt', { session: false }), walletController.verifyPassword);
+
 module.exports = router;
