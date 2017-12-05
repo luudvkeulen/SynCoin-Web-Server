@@ -47,6 +47,7 @@ app.get('/', (req, res) => res.send("API is working."));
 app.use(function (req, res, next) {
     let err = new Error('Not Found');
     err.status = 404;
+    console.log('Érror 404 function');
     next(err);
 });
 
@@ -57,8 +58,7 @@ app.use(function (err, req, res, next) {
     res.locals.error = req.app.get('env') === 'development' ? err : {};
 
     // render the error page
-    res.status(err.status || 500);
-    res.render('error');
+    res.sendStatus(err.status || 500);
 });
 
 app.listen(PORT, () => console.log(`Server: Listening on port ${PORT}`));
