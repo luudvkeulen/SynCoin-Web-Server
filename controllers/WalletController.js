@@ -1,4 +1,4 @@
-const syncoinService = require("./services/SynCoinService");
+const syncoinService = require("../services/SynCoinService");
 
 exports.createWallet = function (req, res) {
     return res.status(200).send("wallet enzo");
