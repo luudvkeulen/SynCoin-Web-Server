@@ -58,7 +58,7 @@ exports.register = function (req, res) {
         .catch(error => { return res.sendStatus(500)});
 };
 
-function findByEmail(email) {
+exports.findByEmail = function(email) {
     return new Promise((resolve, reject) => {
         User.findOne({ 'email': email }, (error, result) => {
             if (error) {

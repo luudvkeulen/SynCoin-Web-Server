@@ -55,11 +55,14 @@ module.exports.createOrder = async function (req, res) {
             created: created,
             user: user
         });
-        const order = await OrderService.saveOrder(newOrder)
+        const order = await OrderService.saveOrder(newOrder);
         const totalPrice = calculateTotalPrice(products);
-        // const orderRequest = req.synCoinService.getOrderRequest(order.reference, totalPrice) || {};
-        const orderRequest = { address: 'test', amount: totalPrice };
-        res.status(200).json({ address: orderRequest.address, amount: orderRequest.amount });
+        const orderRequest = req.synCoinService.getOrderRequest(order.reference, totalPrice);
+        res.status(200).json({ 
+            reference: order.reference, 
+            amount: orderRequest.amount, 
+            address: orderRequest.address 
+        });
     } catch (error) {
         console.log(error)
         res.status(500).json(error);

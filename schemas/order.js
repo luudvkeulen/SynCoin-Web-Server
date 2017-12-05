@@ -5,10 +5,14 @@ const Product = require('./product');
 const User = require('./user');
 
 const orderSchema = new Schema({
-    products: [{ type: Schema.Types.ObjectId, ref: 'Product' }],
-    reference: Schema.Types.ObjectId,
+    products: [Product.schema],
     created: Date,
-    user: { type: Schema.Types.ObjectId, ref: 'User' }
+    user: User.schema
+});
+
+// Defining 'reference' as a virtual field enables you to get the _id of an order by calling order.reference.
+orderSchema.virtual('reference').get(function () {
+    return this._id;
 });
 
 const Order = mongoose.model('Order', orderSchema);
