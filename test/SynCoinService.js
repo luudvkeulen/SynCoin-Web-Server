@@ -3,6 +3,14 @@ const SynCoinService = require("../services/SynCoinService");
 
 require('dotenv').config({ path: 'dev.env' });
 
+// Set to true to log additional output
+const logging = false;
+function log() {
+    if (logging) {
+        console.log.apply({}, arguments);
+    }
+}
+
 describe("SynCoinService", function () {
     // Contract creation takes a while (needs to be mined), set a high timeout
     this.timeout(120000);
@@ -13,7 +21,8 @@ describe("SynCoinService", function () {
     let encryptedAccount = {"version":3,"id":"e7252871-7d70-4d9d-99a1-7b9b41f7d99a","address":"b343b203ca3b194cdf41b8c7a06eb261f1720bcd","crypto":{"ciphertext":"08d68f901e294b5581292ec13f1c489b3b80adab0d8fcb2832e0f43fd581a392","cipherparams":{"iv":"545f55bf52f8520cd46953766872623b"},"cipher":"aes-128-ctr","kdf":"scrypt","kdfparams":{"dklen":32,"salt":"fee64129bfdde0bcad168f8eb0b5ced55bd200e0d762908bcdd1316bd9073ec7","n":8192,"r":8,"p":1},"mac":"9cd6237d7ad3eb2d2a5c253b9f6b8c50174fd74078bec8fe2646503bd23dfb7d"}};
     let walletAddress = "0x866cc9651e8C932225414F622E087ED7A0847eC0";
 
-    // TODO: Owner of shop contract should be configured to a wallet address
+    let shopOwnerEncryptedAccount = {"version":3,"id":"fa306b2c-56e7-4b1a-a4c6-bb1aceec5ad1","address":"7e6c2e15511d0467bc23cc5215bd621ba1c9b97a","crypto":{"ciphertext":"89868751b99924cbc221c16a1c62757213035c1a0c853a29300f31cf3c396da3","cipherparams":{"iv":"3c575145eab693d4a333aad712e90164"},"cipher":"aes-128-ctr","kdf":"scrypt","kdfparams":{"dklen":32,"salt":"79ea766fdbdc8ab547e24179b9e4289fabbff03471fa8e9672ddaf9d4b2a559d","n":8192,"r":8,"p":1},"mac":"eabf8c9f5538ee8b0ad7a570e1b4b0c9b33d6591257d28ee804d2801c7072466"}};
+    let shopOwnerWalletAddress = "0x4Bb3dC8729cA3230E716C0D44E60470Dd0Dc6839";
 
     before(() => {
         service = SynCoinService(
@@ -32,8 +41,8 @@ describe("SynCoinService", function () {
                 assert.ok(result.encryptedAccount.crypto);
                 assert.ok(result.walletContract.options.address);
 
-                console.info("Wallet address: " + result.walletContract.options.address);
-                console.log("Encrypted account: " + JSON.stringify(result.encryptedAccount));
+                log("Wallet address: " + result.walletContract.options.address);
+                log("Encrypted account: " + JSON.stringify(result.encryptedAccount));
 
                 createWalletResult = result;
             });
@@ -53,13 +62,13 @@ describe("SynCoinService", function () {
     // Interaction with wallet
     describe("#sendTransaction", () => {
         it("should be able to send a transaction to a wallet", () => {
-            console.info("Sending transaction...");
+            log("Sending transaction...");
             return service.sendTransaction(walletAddress, encryptedAccount, "goodPassword",
                 "0x226e820f59bB205e14b57803F8D0105e50325a8C", 999)
                 .then((transactionHash) => {
                     assert.ok(transactionHash);
 
-                    console.info("TransactionHash: " + transactionHash);
+                    log("TransactionHash: " + transactionHash);
                 });
         });
     });
@@ -70,7 +79,7 @@ describe("SynCoinService", function () {
                 .then((transactions) => {
                     assert(transactions.length > 0);
 
-                    console.info("First transaction:", transactions[0]);
+                    log("First transaction:", transactions[0]);
 
                     assert.ok(transactions[0].counterAddress);
                 });
@@ -83,7 +92,7 @@ describe("SynCoinService", function () {
         it("should be able to get balance of an account", () => {
             return service.getBalance(encryptedAccount.address)
                 .then(balance => {
-                    console.info("Account balance:", balance);
+                    log("Account balance:", balance);
                     assert(balance > 0);
                 });
         });
@@ -91,7 +100,7 @@ describe("SynCoinService", function () {
         it("should be able to get balance of a wallet", () => {
             return service.getBalance(walletAddress)
                 .then(balance => {
-                    console.info("Wallet balance:", balance);
+                    log("Wallet balance:", balance);
                     assert(balance > 0);
 
                     walletStartBalance = balance;
@@ -103,13 +112,13 @@ describe("SynCoinService", function () {
     let orderReference = "unitTestOrder" + Math.floor(Math.random() * 1000000);
 
     describe("#createOrder", () => {
-        console.info("Test order reference: " + orderReference);
+        log("Test order reference: " + orderReference);
 
         let orderRequest;
 
         it("should successfully create order transaction request", () => {
             orderRequest = service.getOrderRequest(orderReference, 10);
-            console.info("Order transaction request:", orderRequest);
+            log("Order transaction request:", orderRequest);
 
             assert(orderRequest.address);
             assert(orderRequest.amount == 10);
@@ -153,8 +162,9 @@ describe("SynCoinService", function () {
                 .catch(() => true);
         });
 
-        it.skip("should be able to confirm delivering as the shop owner", () => {
-            // TODO: Hard code shop owner in tests?
+        it("should be able to confirm delivering as the shop owner", () => {
+            let request = service.getConfirmDeliveringRequest(orderReference);
+            return service.sendTransactionRequest(shopOwnerWalletAddress, shopOwnerEncryptedAccount, "goodPassword", request);
         });
     });
 
@@ -171,21 +181,36 @@ describe("SynCoinService", function () {
                 .then((updates) => {
                     assert(updates.length > 0);
 
-                    console.info("Earliest update:", updates[0]);
-
-                    return true;
+                    log("Earliest update:", updates[0]);
                 });
         });
 
         it("should be able to find order status updates for the created unit test order", () => {
             return service.getOrderStatusUpdates(orderReference)
                 .then((updates) => {
-                    console.log(updates);
-
                     assert(updates.length > 0);
 
-                    return true;
+                    log("Earliest unit test update:", updates[0]);
+                });
+        });
+    });
+
+    describe("#getDrainRequest", () => {
+        it("should be able to drain the shop", () => {
+            let request = service.getDrainRequest();
+            return service.sendTransactionRequest(walletAddress, encryptedAccount, "goodPassword", request);
+        })
+    });
+
+    describe("#deployShopContract", () => {
+        it("should be able to deploy a shop contract for the created wallet", () => {
+            return service.deployShopContract(walletAddress, 604800)
+                .then((shopContract) => {
+                    assert.ok(shopContract);
+                    log("Shop contract address:", shopContract.options.address);
                 });
         });
     });
 });
+
+// TODO: Test that shop should not be able to call confirmReceived or cancel (stretch)
