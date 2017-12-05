@@ -13,6 +13,7 @@ exports.getTransactions = function (req, res) {
 };
 
 exports.getBalance = function (req, res) {
+    let email = req.user.email;
     syncoinService.getBalance(req.query.address).then(value => {
         return res.status(200).send(value);
     }, error => {

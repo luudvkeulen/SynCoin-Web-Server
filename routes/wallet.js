@@ -2,12 +2,17 @@ const express = require('express');
 const router = express.Router();
 const walletController = require('../controllers/WalletController');
 
-router.post('/create', walletController.createWallet);
+const jwt = require('jsonwebtoken');
+const {passport} = require('./../jwt-config');
 
-router.post('/tx', walletController.sendTransaction);
+const prefix = '/wallet';
 
-router.get('/tx', walletController.getTransactions);
+router.post(prefix + '/create', walletController.createWallet);
 
-router.get('/wallet/balance', walletController.getBalance);
+router.post(prefix + '/tx', walletController.sendTransaction);
+
+router.get(prefix + '/tx', walletController.getTransactions);
+
+router.get(prefix + '/balance', passport.authenticate('jwt', {session: false}), walletController.getBalance);
 
 module.exports = router;
