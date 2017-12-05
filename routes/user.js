@@ -4,25 +4,10 @@ const router = express.Router();
 const jwt = require('jsonwebtoken');
 const { passport, jwtOptions } = require('./../jwt-config');
 
-const walletController = require('./../controllers/WalletController');
-const userController = require('./../controllers/UserController');
+const WalletController = require('./../controllers/WalletController');
+const UserController = require('./../controllers/UserController');
 
-router.post('/user/login', (req, res, next) => {
-    const synCoinService = req.synCoinService;
-    const email = req.body.email;
-    const password = req.body.password;
-    walletController.findByEmail(email)
-        .then(wallet => {
-            if (synCoinService.verifyPassword(wallet.encryptedAccount, password)) {
-                const payload = { email: email };
-                const token = jwt.sign(payload, jwtOptions.secretOrKey);
-                res.json({ token: token });
-            } else {
-                res.status(400).send({ error: 'Incorrect password' });
-            }
-        })
-        .catch(error => res.status(500).send(error));
-});
+router.post('/user/login', UserController.login)
 
 router.get('/jwtTest', passport.authenticate('jwt', { session: false }), (req, res) => {
     res.json({ message: 'Success! You can not see this without a token' });
@@ -40,7 +25,7 @@ router.post('/user/register', (req, res) => {
         return res.sendStatus(500);
     }
 
-    userController
+    UserController
         .create(
             user.email,
             user.name,
@@ -49,11 +34,11 @@ router.post('/user/register', (req, res) => {
             user.company,
             user.address)
         .then(
-            walletController
+            WalletController
                 .create(user.email, user.password)
                 .then(res.sendStatus(200))
                 .catch(() => {
-                        userController.remove(user.email);
+                        UserController.remove(user.email);
                         res.sendStatus(500)
                     }
                 )
