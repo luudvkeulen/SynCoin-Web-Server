@@ -1,10 +1,10 @@
 class OrderStatusUpdate {
     /**
-     * @param reference string
-     * @param status string
-     * @param amount Number|null Only set when
-     * @param time Number
-     * @param transactionHash string
+     * @param {string} reference
+     * @param {string} status
+     * @param {Number} amount Set to 0 when only calling a transaction.
+     * @param {Number} time Block number.
+     * @param {string} transactionHash
      */
     constructor(reference, status, amount, time, transactionHash) {
         this.reference = reference;

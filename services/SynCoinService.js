@@ -19,8 +19,8 @@ module.exports = function SynCoinService(web3Address, walletCreationAccount, sho
      * Creates an account (public-key pair) and a wallet contract owned by that account.
      * Funds the account with some dough to perform transactions.
      *
-     * @param password string
-     * @returns Promise|{{encryptedAccount: object, walletContract: object}}
+     * @param {string} password
+     * @returns {Promise|{encryptedAccount: object, walletContract: object}}
      */
     function createWallet(password) {
         // Create account to own the wallet
@@ -68,8 +68,9 @@ module.exports = function SynCoinService(web3Address, walletCreationAccount, sho
     /**
      * Returns whether the password is valid for the given encrypted account (generated with createWallet())
      *
-     * @param encryptedAccount object
-     * @param password string
+     * @param {object} encryptedAccount
+     * @param {string} password
+     * @return {boolean}
      */
     function verifyPassword(encryptedAccount, password) {
         try {
@@ -86,13 +87,13 @@ module.exports = function SynCoinService(web3Address, walletCreationAccount, sho
     }
 
     /**
-     * @param walletAddress string
-     * @param encryptedAccount object Owner of the wallet.
-     * @param password string
-     * @param toAddress string
-     * @param amount Number
-     * @param data string
-     * @returns {Promise}|{transactionHash: string} Resolves when the tx is broadcasted to blockchain.
+     * @param {string} walletAddress Address of the wallet to send the transaction from.
+     * @param {Account} encryptedAccount Owning account of the wallet.
+     * @param {string} password
+     * @param {string} toAddress
+     * @param {Number} amount In Wei.
+     * @param {string} [data] Binary data of the transaction, if any.
+     * @returns {Promise|string} Promise that resolves with a transaction hash.
      */
     function sendTransaction(walletAddress, encryptedAccount, password, toAddress, amount, data) {
         let accountAddress = addAccountToInMemoryWallet(encryptedAccount, password);
@@ -141,11 +142,11 @@ module.exports = function SynCoinService(web3Address, walletCreationAccount, sho
     /**
      * Performs the transaction described by the given TransactionRequest from the given wallet.
      *
-     * @param walletAddress string
-     * @param transactionRequest TransactionRequest
-     * @param encryptedAccount object
-     * @param password string
-     * @returns {Promise}|{transactionHash: string} Resolves when the tx is broadcasted to blockchain.
+     * @param {string} walletAddress
+     * @param {TransactionRequest} transactionRequest
+     * @param {Account} encryptedAccount
+     * @param {string} password
+     * @returns {Promise|string} Resolves with the transaction hash when the transaction is mined.
      */
     function sendTransactionRequest(walletAddress, encryptedAccount, password, transactionRequest) {
         return sendTransaction(
@@ -157,8 +158,8 @@ module.exports = function SynCoinService(web3Address, walletCreationAccount, sho
     /**
      * Returns the transactions of a wallet.
      *
-     * @param walletAddress string
-     * @returns {Promise}|WalletTransaction[]
+     * @param {string} walletAddress
+     * @returns {Promise|WalletTransaction[]}
      */
     function getWalletTransactions(walletAddress) {
         let walletContract = getWalletContract(walletAddress);
@@ -182,8 +183,8 @@ module.exports = function SynCoinService(web3Address, walletCreationAccount, sho
     }
 
     /**
-     * @param address string
-     * @returns {Promise} Resolves when the balance is received.
+     * @param {string} address
+     * @returns {Promise|Number} Resolves when the balance is received.
      */
     function getBalance(address) {
         return new Promise((resolve, reject) => {
@@ -196,9 +197,9 @@ module.exports = function SynCoinService(web3Address, walletCreationAccount, sho
     }
 
     /**
-     * @param reference string
-     * @param amount Number
-     * @returns TransactionRequest
+     * @param {string} reference
+     * @param {Number} amount
+     * @returns {TransactionRequest}
      */
     function getOrderRequest(reference, amount) {
         let shopContract = getShopContract();
@@ -208,8 +209,8 @@ module.exports = function SynCoinService(web3Address, walletCreationAccount, sho
     }
 
     /**
-     * @param reference string
-     * @returns TransactionRequest
+     * @param {string} reference
+     * @returns {TransactionRequest}
      */
     function getCancelRequest(reference) {
         let shopContract = getShopContract();
@@ -219,8 +220,8 @@ module.exports = function SynCoinService(web3Address, walletCreationAccount, sho
     }
 
     /**
-     * @param reference string
-     * @returns TransactionRequest
+     * @param {string} reference
+     * @returns {TransactionRequest}
      */
     function getConfirmDeliveringRequest(reference) {
         let shopContract = getShopContract();
@@ -230,8 +231,8 @@ module.exports = function SynCoinService(web3Address, walletCreationAccount, sho
     }
 
     /**
-     * @param reference string
-     * @returns TransactionRequest
+     * @param {string} reference
+     * @returns {TransactionRequest}
      */
     function getConfirmReceivedRequest(reference) {
         let shopContract = getShopContract();
@@ -241,8 +242,8 @@ module.exports = function SynCoinService(web3Address, walletCreationAccount, sho
     }
 
     /**
-     * @param reference string
-     * @returns TransactionRequest
+     * @param {string} reference
+     * @returns {TransactionRequest}
      */
     function getDrainRequest(reference) {
         let shopContract = getShopContract();
@@ -254,8 +255,8 @@ module.exports = function SynCoinService(web3Address, walletCreationAccount, sho
     /**
      * Show all order status updates for all orders.
      *
-     * @param reference string|null Optional order reference to show statuses of.
-     * @return {{Promise}}|OrderStatusUpdate[]
+     * @param {string} [reference] Optional single order reference to show statuses of.
+     * @return {Promise|OrderStatusUpdate}
      */
     function getOrderStatusUpdates(reference) {
         let shopContract = getShopContract();
@@ -302,9 +303,9 @@ module.exports = function SynCoinService(web3Address, walletCreationAccount, sho
     /**
      * Accounts must be added to the in-memory wallet before transactions can be sent from their addresses.
      *
-     * @param account object|string A private key or account.
-     * @param password string Supply a password if account is encrypted.
-     * @return string Address to send transactions with.
+     * @param {object|string} account A private key or account (encrypted or unencrypted).
+     * @param {string} password Supply a password if account is encrypted.
+     * @return {string} Address to send transactions with.
      */
     function addAccountToInMemoryWallet(account, password) {
         // Decrypt encrypted account first
@@ -320,9 +321,9 @@ module.exports = function SynCoinService(web3Address, walletCreationAccount, sho
     /**
      * Returns a wallet contract with defaults set so functions can be called without specifying any options.
      *
-     * @param walletAddress string Address of the contract.
-     * @param fromAddress string Address used by default to call the contract from. Make sure it is added to in-memory wallet before calling anything.
-     * @return Contract
+     * @param {string} walletAddress Address of the contract.
+     * @param {string} fromAddress Address used by default to call the contract from. Make sure it is added to in-memory wallet before calling anything.
+     * @return {Contract}
      */
     function getWalletContract(walletAddress, fromAddress) {
         return new web3.eth.Contract(walletContractAbi, walletAddress, {
@@ -336,7 +337,7 @@ module.exports = function SynCoinService(web3Address, walletCreationAccount, sho
     /**
      * Ayy, see getWalletContract and replace wallet with shop.
      *
-     * @return Contract
+     * @return {Contract}
      */
     function getShopContract(fromAddress) {
         return new web3.eth.Contract(shopContractAbi, shopContractAddress, {
