@@ -59,9 +59,10 @@ module.exports.createOrder = async function (req, res) {
         const totalPrice = calculateTotalPrice(products);
         const orderRequest = req.synCoinService.getOrderRequest(order.reference, totalPrice);
         res.status(200).json({ 
-            reference: order.reference, 
+            address: orderRequest.address,
             amount: orderRequest.amount, 
-            address: orderRequest.address 
+            data: orderRequest.data,
+            reference: order.reference, 
         });
     } catch (error) {
         console.log(error)
