@@ -203,8 +203,8 @@ describe("SynCoinService", function () {
     });
 
     describe("#deployShopContract", () => {
-        it("should be able to deploy a shop contract for the created wallet", () => {
-            return service.deployShopContract(walletAddress, 604800)
+        it("should be able to deploy a shop contract for a wallet", () => {
+            return service.deployShopContract(shopOwnerWalletAddress, 604800)
                 .then((shopContract) => {
                     assert.ok(shopContract);
                     log("Shop contract address:", shopContract.options.address);
