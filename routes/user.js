@@ -7,6 +7,8 @@ const { passport, jwtOptions } = require('./../jwt-config');
 const walletController = require('../controllers/WalletController');
 const userController = require('./../controllers/UserController');
 
+// TODO: use https://github.com/hapijs/joi for validation
+
 router.post('/user/login', (req, res, next) => {
     const synCoinService = req.synCoinService;
     const email = req.body.email;
