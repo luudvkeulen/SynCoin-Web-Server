@@ -47,7 +47,7 @@ exports.register = function (req, res) {
             user.address)
         .then(
             walletController
-                .create(user.email, user.password)
+                .createWallet(req, res)
                 .then(res.sendStatus(200))
                 .catch(() => {
                         userController.remove(user.email);

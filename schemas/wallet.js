@@ -5,6 +5,7 @@ const walletSchema = new mongoose.Schema({
         type: String,
         unique: true
     },
+    walletAddress: String,
     encryptedAccount: {
         version: Number,
         id: String,
