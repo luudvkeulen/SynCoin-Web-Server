@@ -22,7 +22,7 @@ describe("SynCoinService", function () {
     let userWalletAddress = "0x866cc9651e8C932225414F622E087ED7A0847eC0";
 
     let encryptedShopAccount = {"version":3,"id":"fa306b2c-56e7-4b1a-a4c6-bb1aceec5ad1","address":"7e6c2e15511d0467bc23cc5215bd621ba1c9b97a","crypto":{"ciphertext":"89868751b99924cbc221c16a1c62757213035c1a0c853a29300f31cf3c396da3","cipherparams":{"iv":"3c575145eab693d4a333aad712e90164"},"cipher":"aes-128-ctr","kdf":"scrypt","kdfparams":{"dklen":32,"salt":"79ea766fdbdc8ab547e24179b9e4289fabbff03471fa8e9672ddaf9d4b2a559d","n":8192,"r":8,"p":1},"mac":"eabf8c9f5538ee8b0ad7a570e1b4b0c9b33d6591257d28ee804d2801c7072466"}};
-    let shopWalletAddress = "0x4Bb3dC8729cA3230E716C0D44E60470Dd0Dc6839";
+    let shopWalletAddress = "0xb799060961558d0479744A76498579f9bA2fa974";
 
     before(() => {
         service = SynCoinService(
@@ -219,4 +219,3 @@ describe("SynCoinService", function () {
 });
 
 // TODO: Test that shop should not be able to call confirmReceived or cancel (stretch)
-// TODO: Confirmed received can run before confirmed delivered
