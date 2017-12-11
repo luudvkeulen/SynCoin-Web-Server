@@ -229,10 +229,20 @@ describe("SynCoinService", function () {
         });
     });
 
-    describe("#getDrainRequest", () => {
+    describe("#drain", () => {
         it("should be able to drain the shop", () => {
-            let request = service.getDrainRequest();
-            return service.sendTransactionRequest(userWalletAddress, encryptedUserAccount, "goodPassword", request);
+            return service.getBalance(shopWalletAddress).then((balanceBefore) => {
+                log("Balance before drain:", balanceBefore);
+                
+                let request = service.getDrainRequest();
+                return service.sendTransactionRequest(shopWalletAddress, encryptedShopAccount, "goodPassword", request)
+                    .then(() => {
+                       return service.getBalance(shopWalletAddress).then((balanceAfter) => {
+                           log("Balance after drain:", balanceBefore);
+                           assert(balanceBefore < balanceAfter);
+                       });
+                    });
+            });
         })
     });
 
