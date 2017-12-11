@@ -7,13 +7,11 @@ const {passport} = require('./../jwt-config');
 
 const prefix = '/wallet';
 
-router.post(prefix + '/tx', passport.authenticate('jwt', {session: false}),walletController.sendTransaction);
+router.post(prefix + '/tx', passport.authenticate('jwt', {session: false}), walletController.sendTransaction);
 
 router.get(prefix + '/balance', passport.authenticate('jwt', {session: false}), walletController.getBalance);
 
 router.get(prefix + '/tx', passport.authenticate('jwt', { session: false }), walletController.walletTransactions);
-
-router.get(prefix + '/balance', passport.authenticate('jwt', { session: false }), walletController.getBalance);
 
 router.get(prefix + '/verifypassword', passport.authenticate('jwt', { session: false }), walletController.verifyPassword);
 
