@@ -39,9 +39,9 @@ describe("SynCoinService", function () {
             return service.createWallet("goodPassword").then((result) => {
                 assert.ok(result.encryptedAccount.address);
                 assert.ok(result.encryptedAccount.crypto);
-                assert.ok(result.walletContract.options.address);
+                assert.ok(result.walletAddress);
 
-                log("Wallet address: " + result.walletContract.options.address);
+                log("Wallet address: " + result.walletAddress);
                 log("Encrypted account: " + JSON.stringify(result.encryptedAccount));
 
                 createWalletResult = result;
@@ -219,3 +219,4 @@ describe("SynCoinService", function () {
 });
 
 // TODO: Test that shop should not be able to call confirmReceived or cancel (stretch)
+// TODO: Confirmed received can run before confirmed delivered
