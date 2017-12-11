@@ -103,10 +103,10 @@ exports.drainOrder = function (req, res) {
 };
 
 exports.createWallet = function (req, res) {
-    req.synCoinService.createWallet(req.body.password).then((encryptedAccount, walletContract) => {
+    req.synCoinService.createWallet(req.body.password).then((encryptedAccount, walletAddress) => {
         let newWallet = Wallet({
             email: req.body.email,
-            walletAddress: walletContract.options.address,
+            walletAddress: walletAddress,
             encryptedAccount: encryptedAccount
         });
 
