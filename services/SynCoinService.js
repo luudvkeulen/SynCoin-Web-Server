@@ -23,37 +23,55 @@ module.exports = function SynCoinService(web3Address, walletCreationAccount, sho
      * @param {string} password
      * @returns {Promise|{encryptedAccount: Account, walletAddress: string}}
      */
-    function createWallet(password) {
+    async function createWallet(password) {
         // Create account to own the wallet
         let encryptedAccount = web3.eth.accounts.create().encrypt(password);
         let accountAddress = addAccountToInMemoryWallet(encryptedAccount, password);
         let walletCreationAddress = addAccountToInMemoryWallet(walletCreationAccount);
 
-        return new Promise((resolve, reject) => {
-            web3.eth.sendTransaction({
-                from: walletCreationAddress,
-                to: accountAddress,
-                value: web3.utils.toWei('1', 'ether'),
-                gas: 1000000,
-                gasPrice: 100000
-            })
-                .then(() => {
-                    // Create and deploy contract from the wallet creation account
-                    let walletContract = getWalletContract(null, walletCreationAddress);
-                    return walletContract
-                        .deploy({
-                            arguments: [
-                                accountAddress // owner
-                            ]
-                        })
-                        .send()
-                        .then((receipt) => {
-                            resolve({
-                                encryptedAccount: encryptedAccount,
-                                walletAddress: receipt.contractAddress
-                            });
-                        });
-                });
+        // Used to prevent wallet creation using the same nonce (preventing underpriced replacement error)
+        // Web3 should be able to handle this if web3.eth.defaultBlock is set to 'pending'
+        // But it doesn't care ¯\_(ツ)_/¯ https://github.com/ethereum/go-ethereum/issues/2880
+        let nonce = await web3.eth.getTransactionCount(walletCreationAddress, 'pending');
+
+        console.log(nonce);
+
+        let fundTransaction = {
+            from: walletCreationAddress,
+            to: accountAddress,
+            value: web3.utils.toWei('1', 'ether'),
+            gas: 1000000,
+            gasPrice: 100000,
+            nonce: nonce
+        };
+
+        return new Promise(async (resolve, reject) => {
+            // Used to prevent wallet creation using the same nonce (preventing underpriced replacement error)
+            nonce = await web3.eth.getTransactionCount(walletCreationAddress, 'pending');
+
+            console.log(nonce);
+
+            // Fund the account with money for transactions (non-blocking)
+            await web3.eth.call(fundTransaction);
+            web3.eth.sendTransaction(fundTransaction);
+
+            // Create and deploy contract from the wallet creation account (blocking)
+            return getWalletContract(null, walletCreationAddress)
+                .deploy({
+                    arguments: [
+                        accountAddress // owner
+                    ]
+                })
+                .send({
+                    nonce: nonce
+                })
+                .then((receipt) => {
+                    resolve({
+                        encryptedAccount: encryptedAccount,
+                        walletAddress: receipt.contractAddress
+                    });
+                })
+                .catch(reject);
         });
     }
 
@@ -79,15 +97,19 @@ module.exports = function SynCoinService(web3Address, walletCreationAccount, sho
     }
 
     /**
+     * Performs a transaction on the blockchain network.
+     * Will first simulate the call to check if it can succeed, and returns before it is actually mined.
+     * Use getConfirmations afterwards to check if it actually has been mined.
+     *
      * @param {string} walletAddress Address of the wallet to send the transaction from.
      * @param {Account} encryptedAccount Owning account of the wallet.
      * @param {string} password
      * @param {string} toAddress
      * @param {Number} amount In Wei.
      * @param {string} [data] Binary data of the transaction, if any.
-     * @returns {Promise|string} Promise that resolves with a transaction hash.
+     * @returns {Promise|string} Promise that resolves with a transaction hash as soon as the transaction is broadcast on the network.
      */
-    function sendTransaction(walletAddress, encryptedAccount, password, toAddress, amount, data) {
+    async function sendTransaction(walletAddress, encryptedAccount, password, toAddress, amount, data) {
         let accountAddress = addAccountToInMemoryWallet(encryptedAccount, password);
         let walletContract = getWalletContract(walletAddress, accountAddress);
 
@@ -97,42 +119,38 @@ module.exports = function SynCoinService(web3Address, walletCreationAccount, sho
 
         let sendMethod = walletContract.methods.send(toAddress, amount, data);
 
-        // Simulate first
-        return sendMethod
-            .call()
-            .then((result) => {
-                if (result == 1) {
-                    return sendMethod
-                        .send()
-                        .then((receipt) => {
-                            if (receipt.events.TransactionSent) {
-                                return receipt.transactionHash;
-                            } else {
-                                throw new Error('WalletTransaction was mined but no event was created.');
-                            }
-                        });
-                } else {
-                    let error = 'Unknown error.';
+        // Simulate the transaction and check the result
+        let callResult = await sendMethod.call();
 
-                    if (result == 2) {
-                        error = 'Sending account is not wallet owner.';
-                    } else if (result == 3) {
-                        error = 'Transaction failed to execute, there might be insufficient funds available.';
-                    }
+        if (callResult != 1) {
+            switch (callResult) {
+                case 2:
+                    throw new Error('Transaction could not be performed because the sending account is not the wallet\'s owner');
 
-                    throw new Error(`Transaction could not be performed (${error}).`);
-                }
-            });
+                case 3:
+                    throw new Error('Transaction failed to execute due to insufficient wallet funds or a failed contract call.');
+
+                default:
+                    throw new Error('Transaction could not be performed due to an unexpected exception.');
+            }
+        }
+
+        // Actually perform the transaction and resolve as soon as the transactionHash is known
+        return new Promise((resolve, reject) => {
+            sendMethod.send()
+                .on("transactionHash", resolve)
+                .catch(reject);
+        });
     }
 
     /**
-     * Performs the transaction described by the given TransactionRequest from the given wallet.
+     * Creates a transaction from a request and tests whether it can be performed in the current blockchain state.
      *
-     * @param {string} walletAddress
-     * @param {TransactionRequest} transactionRequest
-     * @param {Account} encryptedAccount
+     * @param {string} walletAddress Address of the wallet to send the transaction from.
+     * @param {Account} encryptedAccount Owning account of the wallet.
      * @param {string} password
-     * @returns {Promise|string} Resolves with the transaction hash when the transaction is mined.
+     * @param {TransactionRequest} transactionRequest The transaction request to perform.
+     * @returns {Promise|Transaction} Promise that resolves with a Transaction object if the transaction can be performed.
      */
     function sendTransactionRequest(walletAddress, encryptedAccount, password, transactionRequest) {
         return sendTransaction(
@@ -142,61 +160,50 @@ module.exports = function SynCoinService(web3Address, walletCreationAccount, sho
     }
 
     /**
-     * Same as sendTransaction, but will not wait for the transaction to be mined.
-     * Do not use this function if you are going to send out multiple transactions that depend on eachother.
+     * Returns the amount of confirmations a transaction has.
      *
-     * @param {string} walletAddress Address of the wallet to send the transaction from.
-     * @param {Account} encryptedAccount Owning account of the wallet.
-     * @param {string} password
-     * @param {string} toAddress
-     * @param {Number} amount In Wei.
-     * @param {string} [data] Binary data of the transaction, if any.
-     * @returns {Promise|string} Promise that resolves with a transaction hash.
+     * @param {string} transactionHash
+     * @returns {Number} Amount of confirmations, 0 if it hasn't been included in a block or doesn't exist.
      */
-    async function sendTransactionImmediate(walletAddress, encryptedAccount, password, toAddress, amount, data) {
-        let accountAddress = addAccountToInMemoryWallet(encryptedAccount, password);
-        let walletContract = getWalletContract(walletAddress, accountAddress);
-
-        if (!data) {
-            data = '0x';
-        }
-
-        let sendMethod = walletContract.methods.send(toAddress, amount, data);
-
-        // Simulate first
-        let callResult = await sendMethod.call();
-
-        if (callResult == 1) {
-            return new Promise((resolve) => {
-                sendMethod.send().on('transactionHash', resolve);
-            });
-        } else {
-            let error = 'Unknown error.';
-
-            if (callResult == 2) {
-                error = 'Sending account is not wallet owner.';
-            } else if (callResult == 3) {
-                error = 'Transaction failed to execute, there might be invalid funds available.';
-            }
-
-            throw new Error(`Transaction could not be performed (${error}).`);
+    async function getConfirmations(transactionHash) {
+        try {
+            let transaction = await web3.eth.getTransaction(transactionHash);
+            return transaction.blockNumber ? transaction.blockNumber : 0;
+        } catch (error) {
+            return 0;
         }
     }
 
     /**
-     * Performs the transaction described by the given TransactionRequest from the given wallet.
+     * Returns a promise that will resolve as soon as the transaction with the given hash is mined.
      *
-     * @param {string} walletAddress
-     * @param {TransactionRequest} transactionRequest
-     * @param {Account} encryptedAccount
-     * @param {string} password
-     * @returns {Promise|string} Resolves with the transaction hash when the transaction is mined.
+     * @param {string} transactionHash
+     * @returns {Promise}
      */
-    async function sendTransactionRequestImmediate(walletAddress, encryptedAccount, password, transactionRequest) {
-        return sendTransactionImmediate(
-            walletAddress, encryptedAccount, password, transactionRequest.address, transactionRequest.amount,
-            transactionRequest.data
-        );
+    async function waitForConfirmation(transactionHash) {
+        // If transaction is already mined, resolve immediately
+        let initialConfirmations = await getConfirmations(transactionHash);
+
+        if (initialConfirmations > 0) {
+            return;
+        }
+
+        // Subscribe to block updates and resolve as soon as there are confirmations
+        let subscription = web3.eth.subscribe('newBlockHeaders');
+
+        return new Promise((resolve, reject) => {
+            subscription
+                .on('data', async () => {
+                    let confirmations = await getConfirmations(transactionHash);
+
+                    if (confirmations > 0) {
+                        subscription.unsubscribe();
+
+                        resolve();
+                    }
+                })
+                .on('error', reject);
+        });
     }
 
     /**
@@ -429,7 +436,7 @@ module.exports = function SynCoinService(web3Address, walletCreationAccount, sho
         getDrainRequest,
         getOrderStatusUpdates,
         deployShopContract,
-        sendTransactionImmediate,
-        sendTransactionRequestImmediate
+        getConfirmations,
+        waitForConfirmation
     };
 };

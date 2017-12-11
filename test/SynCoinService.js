@@ -4,7 +4,7 @@ const SynCoinService = require("../services/SynCoinService");
 require('dotenv').config({ path: 'dev.env' });
 
 // Set to true to log additional output
-const logging = false;
+const logging = true;
 function log() {
     if (logging) {
         console.log.apply({}, arguments);
@@ -46,6 +46,13 @@ describe("SynCoinService", function () {
 
                 createWalletResult = result;
             });
+        });
+
+        it("should fund the account with transaction money", () => {
+            return service.getBalance(createWalletResult.encryptedAccount.address)
+                .then((balance) => {
+                    assert(balance > 0);
+                });
         });
     });
 
