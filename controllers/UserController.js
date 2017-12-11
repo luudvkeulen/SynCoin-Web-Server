@@ -47,10 +47,10 @@ exports.register = function (req, res) {
             user.address)
         .then(
             walletController
-                .createWallet(req, res)
+                .createWallet(user.email, user.password)
                 .then(res.sendStatus(200))
                 .catch(() => {
-                        userController.remove(user.email);
+                        //userController.remove(user.email);
                         return res.sendStatus(500)
                     }
                 )

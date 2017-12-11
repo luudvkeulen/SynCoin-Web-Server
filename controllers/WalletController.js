@@ -102,24 +102,26 @@ exports.drainOrder = function (req, res) {
     });
 };
 
-exports.createWallet = function (req, res) {
-    req.synCoinService.createWallet(req.body.password).then((encryptedAccount, walletAddress) => {
-        let newWallet = Wallet({
-            email: req.body.email,
-            walletAddress: walletAddress,
-            encryptedAccount: encryptedAccount
-        });
+exports.createWallet = function (email, password) {
+    return new Promise((resolve, reject) => {
+        req.synCoinService.createWallet(password).then((encryptedAccount, walletAddress) => {
+            let newWallet = Wallet({
+                email: email,
+                walletAddress: walletAddress,
+                encryptedAccount: encryptedAccount
+            });
 
-        newWallet.save((err) => {
-            if(err) {
-                res.status(500).send(err);
-                return;
-            }
+            newWallet.save((err) => {
+                if (err) {
+                    reject(err);
+                    return;
+                }
 
-            res.sendStatus(200);
+                resolve();
+            });
+        }).catch((err) => {
+            reject(err);
         });
-    }).catch((err) => {
-        res.status(500).send(err);
     });
 };
 
