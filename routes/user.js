@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 
-const { passport, jwtOptions } = require('./../jwt-config');
+const { passport } = require('./../jwt-config');
 
 const userController = require('../controllers/UserController');
 
