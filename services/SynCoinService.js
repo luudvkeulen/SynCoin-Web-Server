@@ -339,7 +339,7 @@ module.exports = function SynCoinService(web3Address, walletCreationAccount, sho
      *
      * @param {string} ownerAddress
      * @param {Number} orderLifetime In seconds.
-     * @return {Promise|Contract}
+     * @return {Promise|string}
      */
     function deployShopContract(ownerAddress, orderLifetime) {
         let walletCreationAddress = addAccountToInMemoryWallet(walletCreationAccount);
@@ -353,10 +353,7 @@ module.exports = function SynCoinService(web3Address, walletCreationAccount, sho
             })
             .send()
             .then((receipt) => {
-                shopContract.options.address = receipt.contractAddress;
-                shopContract.options.from = ownerAddress;
-
-                return shopContract;
+                return receipt.contractAddress;
             });
     }
 
