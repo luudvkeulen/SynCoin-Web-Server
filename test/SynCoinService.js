@@ -84,6 +84,19 @@ describe("SynCoinService", function () {
         });
     });
 
+    describe("#sendTransactionImmediate", () => {
+        it("should be able to send a transaction immediately", () => {
+            log("Sending transaction...");
+            return service.sendTransactionImmediate(userWalletAddress, encryptedUserAccount, "goodPassword",
+                shopWalletAddress, 999)
+                .then((transactionHash) => {
+                    assert.ok(transactionHash);
+
+                    log("TransactionHash: " + transactionHash);
+                });
+        });
+    });
+
     describe("#getWalletTransactions", () => {
         it("should be able to retrieve all transactions from a wallet", () => {
             return service.getWalletTransactions(userWalletAddress)

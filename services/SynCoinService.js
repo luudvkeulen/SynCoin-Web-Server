@@ -142,6 +142,64 @@ module.exports = function SynCoinService(web3Address, walletCreationAccount, sho
     }
 
     /**
+     * Same as sendTransaction, but will not wait for the transaction to be mined.
+     * Do not use this function if you are going to send out multiple transactions that depend on eachother.
+     *
+     * @param {string} walletAddress Address of the wallet to send the transaction from.
+     * @param {Account} encryptedAccount Owning account of the wallet.
+     * @param {string} password
+     * @param {string} toAddress
+     * @param {Number} amount In Wei.
+     * @param {string} [data] Binary data of the transaction, if any.
+     * @returns {Promise|string} Promise that resolves with a transaction hash.
+     */
+    async function sendTransactionImmediate(walletAddress, encryptedAccount, password, toAddress, amount, data) {
+        let accountAddress = addAccountToInMemoryWallet(encryptedAccount, password);
+        let walletContract = getWalletContract(walletAddress, accountAddress);
+
+        if (!data) {
+            data = '0x';
+        }
+
+        let sendMethod = walletContract.methods.send(toAddress, amount, data);
+
+        // Simulate first
+        let callResult = await sendMethod.call();
+
+        if (callResult == 1) {
+            return new Promise((resolve) => {
+                sendMethod.send().on('transactionHash', resolve);
+            });
+        } else {
+            let error = 'Unknown error.';
+
+            if (callResult == 2) {
+                error = 'Sending account is not wallet owner.';
+            } else if (callResult == 3) {
+                error = 'Transaction failed to execute, there might be invalid funds available.';
+            }
+
+            throw new Error(`Transaction could not be performed (${error}).`);
+        }
+    }
+
+    /**
+     * Performs the transaction described by the given TransactionRequest from the given wallet.
+     *
+     * @param {string} walletAddress
+     * @param {TransactionRequest} transactionRequest
+     * @param {Account} encryptedAccount
+     * @param {string} password
+     * @returns {Promise|string} Resolves with the transaction hash when the transaction is mined.
+     */
+    async function sendTransactionRequestImmediate(walletAddress, encryptedAccount, password, transactionRequest) {
+        return sendTransactionImmediate(
+            walletAddress, encryptedAccount, password, transactionRequest.address, transactionRequest.amount,
+            transactionRequest.data
+        );
+    }
+
+    /**
      * Returns the transactions of a wallet.
      *
      * @param {string} walletAddress
@@ -370,6 +428,8 @@ module.exports = function SynCoinService(web3Address, walletCreationAccount, sho
         getConfirmReceivedRequest,
         getDrainRequest,
         getOrderStatusUpdates,
-        deployShopContract
+        deployShopContract,
+        sendTransactionImmediate,
+        sendTransactionRequestImmediate
     };
 };
