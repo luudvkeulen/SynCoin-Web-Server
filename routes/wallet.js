@@ -7,8 +7,6 @@ const {passport} = require('./../jwt-config');
 
 const prefix = '/wallet';
 
-router.post(prefix + '/create', passport.authenticate('jwt', {session: false}), walletController.createWallet);
-
 router.post(prefix + '/tx', passport.authenticate('jwt', {session: false}),walletController.sendTransaction);
 
 router.get(prefix + '/balance', passport.authenticate('jwt', {session: false}), walletController.getBalance);
