@@ -117,7 +117,7 @@ module.exports = function SynCoinService(web3Address, walletCreationAccount, sho
                     if (result == 2) {
                         error = 'Sending account is not wallet owner.';
                     } else if (result == 3) {
-                        error = 'Transaction failed to execute, there might be invalid funds available.';
+                        error = 'Transaction failed to execute, there might be insufficient funds available.';
                     }
 
                     throw new Error(`Transaction could not be performed (${error}).`);
