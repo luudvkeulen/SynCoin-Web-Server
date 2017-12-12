@@ -183,6 +183,7 @@ describe("SynCoinService", function () {
             it("should fail to create an order with the same reference twice", async () => {
                 try {
                     await service.sendTransactionRequest(userWalletAddress, encryptedUserAccount, "goodPassword", orderRequest1);
+                    assert.fail();
                 } catch (error) {
                 }
             });

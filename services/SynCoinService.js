@@ -32,6 +32,7 @@ module.exports = function SynCoinService(web3Address, walletCreationAccount, sho
      * @returns {Promise|Number}
      */
     async function getNonce(address) {
+        // TODO: Latest block might not have included all submitted transactions...
         let blockHash = (await web3.eth.getBlock('latest', false)).hash;
 
         if (blockHash != noncesBlockHash) {
@@ -193,7 +194,14 @@ module.exports = function SynCoinService(web3Address, walletCreationAccount, sho
     async function getConfirmations(transactionHash) {
         try {
             let transaction = await web3.eth.getTransaction(transactionHash);
-            return transaction.blockNumber ? transaction.blockNumber : 0;
+
+            if (transaction.blockNumber) {
+                let currentBlockNumber = await web3.eth.getBlockNumber();
+
+                return currentBlockNumber - transaction.blockNumber + 1;
+            } else {
+                return 0;
+            }
         } catch (error) {
             return 0;
         }
@@ -243,16 +251,16 @@ module.exports = function SynCoinService(web3Address, walletCreationAccount, sho
         let events = await walletContract.getPastEvents('allEvents', {fromBlock: 0});
 
         // Map the obtained events into WalletTransaction objects
-        return events.map((event) => {
+        return Promise.all(events.map(async (event) => {
             let sent = (event.event == 'TransactionSent');
 
             return new WalletTransaction(
                 (sent ? event.returnValues.receiver : event.returnValues.sender),
                 (sent ? -event.returnValues.amount : event.returnValues.amount),
-                event.blockNumber, // TODO: eth.getBlock(blockNumber) -> time
+                await web3.eth.getBlock(event.blockNumber).timestamp,
                 event.transactionHash
             );
-        });
+        }));
     }
 
     /**
@@ -332,9 +340,9 @@ module.exports = function SynCoinService(web3Address, walletCreationAccount, sho
         });
 
         // Filter and map the obtained events into OrderStatuses
-        return events
+        return Promise.all(events
             .filter((event) => !reference || event.returnValues.reference == reference)
-            .map((event) => {
+            .map(async (event) => {
                 let status = OrderStatusUpdate.UNKNOWN;
 
                 switch (event.event) {
@@ -359,10 +367,10 @@ module.exports = function SynCoinService(web3Address, walletCreationAccount, sho
                     event.returnValues.reference,
                     status,
                     event.returnValues.amount ? event.returnValues.amount : null,
-                    event.blockNumber, // TODO: eth.getBlock(blockNumber) -> time
+                    await web3.eth.getBlock(event.blockNumber).timestamp,
                     event.transactionHash
                 );
-            });
+            }));
     }
 
     /**
@@ -419,7 +427,7 @@ module.exports = function SynCoinService(web3Address, walletCreationAccount, sho
      *
      * @param {string} ownerAddress
      * @param {Number} orderLifetime In seconds.
-     * @return {Promise|Contract}
+     * @return {Promise|string}
      */
     async function deployShopContract(ownerAddress, orderLifetime) {
         let walletCreationAddress = addAccountToInMemoryWallet(walletCreationAccount);
