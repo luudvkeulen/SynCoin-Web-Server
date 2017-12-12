@@ -66,7 +66,8 @@ describe("SynCoinService", function () {
         });
     });
 
-    // Interaction with wallet
+    let sendTransactionHash;
+    
     describe("#sendTransaction", () => {
         it("should be able to send a transaction to a wallet", () => {
             log("Sending transaction...");
@@ -87,6 +88,36 @@ describe("SynCoinService", function () {
                     assert.ok(transactionHash);
 
                     log("TransactionHash: " + transactionHash);
+
+                    sendTransactionHash = transactionHash;
+                });
+        });
+    });
+
+    describe("#getConfirmations", () => {
+        it("should not return the previous transaction as being confirmed", () => {
+            return service.getConfirmations(sendTransactionHash)
+                .then((confirmations) => {
+                    assert(confirmations === 0);
+                });
+        });
+
+        it("should return zero for an invalid transaction hash", () => {
+            return service.getConfirmations("0xeeeeeeeeeeeeeeeeee")
+                .then((confirmations) => {
+                    assert(confirmations === 0);
+                });
+        })
+    });
+
+    describe("#waitForConfirmation", () => {
+        it("should wait for the previous transaction to be confirmed", () => {
+            return service.waitForConfirmation(sendTransactionHash)
+                .then(() => {
+                    return service.getConfirmations(sendTransactionHash)
+                        .then((confirmations) => {
+                            assert(confirmations > 0);
+                        });
                 });
         });
     });
@@ -144,7 +175,6 @@ describe("SynCoinService", function () {
         });
     });
 
-    // Interaction with shop
     let orderReference1 = "unitTestOrder1-" + Math.floor(Math.random() * 1000000);
     let orderReference2 = "unitTestOrder2-" + Math.floor(Math.random() * 1000000);
 
