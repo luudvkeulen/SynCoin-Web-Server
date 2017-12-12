@@ -64,7 +64,18 @@ describe("SynCoinService", function () {
         it("should be able to send a transaction to a wallet", () => {
             log("Sending transaction...");
             return service.sendTransaction(userWalletAddress, encryptedUserAccount, "goodPassword",
-                "0x226e820f59bB205e14b57803F8D0105e50325a8C", 999)
+                shopWalletAddress, 999)
+                .then((transactionHash) => {
+                    assert.ok(transactionHash);
+
+                    log("TransactionHash: " + transactionHash);
+                });
+        });
+
+        it("should be able to send a transaction from the shop wallet", () => {
+            log("Sending transaction...");
+            return service.sendTransaction(shopWalletAddress, encryptedShopAccount, "goodPassword",
+                userWalletAddress, 999)
                 .then((transactionHash) => {
                     assert.ok(transactionHash);
 
@@ -89,18 +100,36 @@ describe("SynCoinService", function () {
     let walletStartBalance;
 
     describe("#getBalance", () => {
-        it("should be able to get balance of an account", () => {
+        it("should be able to get balance of the user account", () => {
             return service.getBalance(encryptedUserAccount.address)
                 .then(balance => {
-                    log("Account balance:", balance);
+                    log("User account balance:", balance);
                     assert(balance > 0);
                 });
         });
 
-        it("should be able to get balance of a wallet", () => {
+        it("should be able to get balance of the shop account", () => {
+            return service.getBalance(encryptedShopAccount.address)
+                .then(balance => {
+                    log("Shop account balance:", balance);
+                    assert(balance > 0);
+                });
+        });
+
+        it("should be able to get balance of the user wallet", () => {
             return service.getBalance(userWalletAddress)
                 .then(balance => {
-                    log("Wallet balance:", balance);
+                    log("User wallet balance:", balance);
+                    assert(balance > 0);
+
+                    walletStartBalance = balance;
+                });
+        });
+
+        it("should be able to get balance of the shop wallet", () => {
+            return service.getBalance(userWalletAddress)
+                .then(balance => {
+                    log("Shop wallet balance:", balance);
                     assert(balance > 0);
 
                     walletStartBalance = balance;
@@ -200,23 +229,32 @@ describe("SynCoinService", function () {
         });
     });
 
-    describe("#getDrainRequest", () => {
+    describe("#drain", () => {
         it("should be able to drain the shop", () => {
-            let request = service.getDrainRequest();
-            return service.sendTransactionRequest(userWalletAddress, encryptedUserAccount, "goodPassword", request);
+            return service.getBalance(shopWalletAddress).then((balanceBefore) => {
+                log("Balance before drain:", balanceBefore);
+                
+                let request = service.getDrainRequest();
+                return service.sendTransactionRequest(shopWalletAddress, encryptedShopAccount, "goodPassword", request)
+                    .then(() => {
+                       return service.getBalance(shopWalletAddress).then((balanceAfter) => {
+                           log("Balance after drain:", balanceBefore);
+                           assert(balanceBefore < balanceAfter);
+                       });
+                    });
+            });
         })
     });
 
     describe("#deployShopContract", () => {
         it("should be able to deploy a shop contract for a wallet", () => {
             return service.deployShopContract(shopWalletAddress, 604800)
-                .then((shopContract) => {
-                    assert.ok(shopContract);
-                    log("Shop contract address:", shopContract.options.address);
+                .then((shopContractAddress) => {
+                    assert.ok(shopContractAddress);
+                    log("Shop contract address:", shopContractAddress);
                 });
         });
     });
 });
 
 // TODO: Test that shop should not be able to call confirmReceived or cancel (stretch)
-// TODO: Confirmed received can run before confirmed delivered
