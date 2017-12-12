@@ -4,7 +4,7 @@ const SynCoinService = require("../services/SynCoinService");
 require('dotenv').config({ path: 'dev.env' });
 
 // Set to true to log additional output
-const logging = false;
+const logging = true;
 function log() {
     if (logging) {
         console.log.apply({}, arguments);
@@ -12,7 +12,7 @@ function log() {
 }
 
 describe("SynCoinService", function () {
-    // Contract creation takes a while (needs to be mined), set a high timeout
+    // Waiting for confirmations takes a while: set a high timeout
     this.timeout(120000);
 
     let service;
@@ -201,6 +201,9 @@ describe("SynCoinService", function () {
             await service.waitForConfirmation(cancel2TransactionHash);
 
             let balance = await service.getBalance(userWalletAddress);
+
+            log("Balance before cancel:", walletBalanceBeforeCancel);
+            log("Balance after cancel:", balance);
 
             assert(balance > walletBalanceBeforeCancel);
         });

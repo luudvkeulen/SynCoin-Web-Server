@@ -82,7 +82,7 @@ module.exports = function SynCoinService(web3Address, walletCreationAccount, sho
             web3.eth.sendTransaction(fundTransaction);
 
             // Create and deploy contract from the wallet creation account (blocking)
-            return getWalletContract(null, walletCreationAddress)
+            let receipt = await getWalletContract(null, walletCreationAddress)
                 .deploy({
                     arguments: [
                         accountAddress // owner
@@ -90,14 +90,12 @@ module.exports = function SynCoinService(web3Address, walletCreationAccount, sho
                 })
                 .send({
                     nonce: await getNonce(walletCreationAddress)
-                })
-                .then((receipt) => {
-                    resolve({
-                        encryptedAccount: encryptedAccount,
-                        walletAddress: receipt.contractAddress
-                    });
-                })
-                .catch(reject);
+                });
+
+            return {
+                encryptedAccount: encryptedAccount,
+                walletAddress: receipt.contractAddress
+            };
         });
     }
 
@@ -241,39 +239,30 @@ module.exports = function SynCoinService(web3Address, walletCreationAccount, sho
      * @param {string} walletAddress
      * @returns {Promise|WalletTransaction[]}
      */
-    function getWalletTransactions(walletAddress) {
+    async function getWalletTransactions(walletAddress) {
         let walletContract = getWalletContract(walletAddress);
 
-        return walletContract.getPastEvents('allEvents', {
-            fromBlock: 0
-        })
-            .then((events) => {
-                // Map the obtained events into WalletTransaction objects
-                return events.map((event) => {
-                    let sent = (event.event == 'TransactionSent');
+        let events = await walletContract.getPastEvents('allEvents', {fromBlock: 0});
 
-                    return new WalletTransaction(
-                        (sent ? event.returnValues.receiver : event.returnValues.sender),
-                        (sent ? -event.returnValues.amount : event.returnValues.amount),
-                        event.blockNumber, // TODO: eth.getBlock(blockNumber) -> time
-                        event.transactionHash
-                    );
-                });
-            });
+        // Map the obtained events into WalletTransaction objects
+        return events.map((event) => {
+            let sent = (event.event == 'TransactionSent');
+
+            return new WalletTransaction(
+                (sent ? event.returnValues.receiver : event.returnValues.sender),
+                (sent ? -event.returnValues.amount : event.returnValues.amount),
+                event.blockNumber, // TODO: eth.getBlock(blockNumber) -> time
+                event.transactionHash
+            );
+        });
     }
 
     /**
      * @param {string} address
      * @returns {Promise|Number} Resolves when the balance is received.
      */
-    function getBalance(address) {
-        return new Promise((resolve, reject) => {
-            web3.eth.getBalance(address)
-                .then(balance => {
-                    resolve(balance);
-                })
-                .catch(reject);
-        });
+    async function getBalance(address) {
+        return web3.eth.getBalance(address);
     }
 
     /**
@@ -337,45 +326,44 @@ module.exports = function SynCoinService(web3Address, walletCreationAccount, sho
      * @param {string} [reference] Optional single order reference to show statuses of.
      * @return {Promise|OrderStatusUpdate}
      */
-    function getOrderStatusUpdates(reference) {
+    async function getOrderStatusUpdates(reference) {
         let shopContract = getShopContract();
 
-        return shopContract.getPastEvents('allEvents', {
+        let events = await shopContract.getPastEvents('allEvents', {
             fromBlock: 0
-        })
-            .then((events) => {
-                // Filter and map the obtained events into OrderStatuses
-                return events
-                    .filter((event) => !reference || event.returnValues.reference == reference)
-                    .map((event) => {
-                        let status = OrderStatusUpdate.UNKNOWN;
+        });
 
-                        switch (event.event) {
-                            case 'OrderCreated':
-                                status = OrderStatusUpdate.CREATED;
-                                break;
+        // Filter and map the obtained events into OrderStatuses
+        return events
+            .filter((event) => !reference || event.returnValues.reference == reference)
+            .map((event) => {
+                let status = OrderStatusUpdate.UNKNOWN;
 
-                            case 'OrderConfirmedDelivering':
-                                status = OrderStatusUpdate.DELIVERING;
-                                break;
+                switch (event.event) {
+                    case 'OrderCreated':
+                        status = OrderStatusUpdate.CREATED;
+                        break;
 
-                            case 'OrderConfirmedReceived':
-                                status = OrderStatusUpdate.RECEIVED;
-                                break;
+                    case 'OrderConfirmedDelivering':
+                        status = OrderStatusUpdate.DELIVERING;
+                        break;
 
-                            case 'OrderCanceled':
-                                status = OrderStatusUpdate.CANCELED;
-                                break;
-                    }
+                    case 'OrderConfirmedReceived':
+                        status = OrderStatusUpdate.RECEIVED;
+                        break;
 
-                    return new OrderStatusUpdate(
-                        event.returnValues.reference,
-                        status,
-                        event.returnValues.amount ? event.returnValues.amount : null,
-                        event.blockNumber, // TODO: eth.getBlock(blockNumber) -> time
-                        event.transactionHash
-                    );
-                });
+                    case 'OrderCanceled':
+                        status = OrderStatusUpdate.CANCELED;
+                        break;
+                }
+
+                return new OrderStatusUpdate(
+                    event.returnValues.reference,
+                    status,
+                    event.returnValues.amount ? event.returnValues.amount : null,
+                    event.blockNumber, // TODO: eth.getBlock(blockNumber) -> time
+                    event.transactionHash
+                );
             });
     }
 
@@ -435,20 +423,20 @@ module.exports = function SynCoinService(web3Address, walletCreationAccount, sho
      * @param {Number} orderLifetime In seconds.
      * @return {Promise|string}
      */
-    function deployShopContract(ownerAddress, orderLifetime) {
+    async function deployShopContract(ownerAddress, orderLifetime) {
         let walletCreationAddress = addAccountToInMemoryWallet(walletCreationAccount);
         let shopContract = getShopContract(walletCreationAddress);
-        return shopContract
+
+        let receipt = await shopContract
             .deploy({
                 arguments: [
                     ownerAddress,
                     orderLifetime
                 ]
             })
-            .send()
-            .then((receipt) => {
-                return receipt.contractAddress;
-            });
+            .send();
+
+        return receipt.contractAddress;
     }
 
     return {
