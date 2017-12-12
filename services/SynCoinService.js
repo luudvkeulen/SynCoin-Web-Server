@@ -25,7 +25,9 @@ module.exports = function SynCoinService(web3Address, walletCreationAccount, sho
      * https://github.com/ethereum/go-ethereum/issues/2880
      *
      * Corrects the nonce when Web3's getTransactionCount() is higher to TRY to prevent errors after external transactions.
-     * Be wary that even if you do not use the obtained nonce it will still increment, making future transactions from the address impossible.
+     * Make sure to call discardNonce() if you decide not to use the generated nonce, to decrement it.
+     *
+     * This entire system will fail dramatically as soon as a transaction is submitted but fails to execute, in which case the nonce will increment anyway and will remain too high.
      *
      * @param {string} address
      * @returns {Promise|Number}
@@ -39,10 +41,18 @@ module.exports = function SynCoinService(web3Address, walletCreationAccount, sho
 
         let nonce = Math.max(appNonce, web3Nonce);
 
-        // Store the incremented nonce for use in next request
+        // Increment nonce for use in the next transaction from this address.
         nonces[address] = nonce + 1;
 
         return nonce;
+    }
+
+    /**
+     * Decrements the nonce counter for an address.
+     * Run this when you requested a nonce but did not submit a transaction.
+     */
+    function discardNonce(address) {
+        nonces[address]--;
     }
 
     /**
@@ -139,6 +149,8 @@ module.exports = function SynCoinService(web3Address, walletCreationAccount, sho
         let callResult = Number(await sendMethod.call(transactionArguments));
 
         if (callResult !== 1) {
+            discardNonce(accountAddress);
+
             switch (callResult) {
                 case 2:
                     throw new Error('Transaction could not be performed because the sending account is not the wallet\'s owner');
