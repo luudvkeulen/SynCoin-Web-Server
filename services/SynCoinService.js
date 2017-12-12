@@ -70,33 +70,31 @@ module.exports = function SynCoinService(web3Address, walletCreationAccount, sho
         let fundTransaction = {
             from: walletCreationAddress,
             to: accountAddress,
-            value: web3.utils.toWei('1', 'ether'),
+            value: web3.utils.toWei('0.1', 'ether'),
             gas: 1000000,
             gasPrice: 100000,
             nonce: await getNonce(walletCreationAddress)
         };
 
-        return new Promise(async (resolve, reject) => {
-            // Fund the account with money for transactions (non-blocking)
-            await web3.eth.call(fundTransaction);
-            web3.eth.sendTransaction(fundTransaction);
+        // Fund the account with money for transactions (non-blocking)
+        await web3.eth.call(fundTransaction);
+        web3.eth.sendTransaction(fundTransaction);
 
-            // Create and deploy contract from the wallet creation account (blocking)
-            let receipt = await getWalletContract(null, walletCreationAddress)
-                .deploy({
-                    arguments: [
-                        accountAddress // owner
-                    ]
-                })
-                .send({
-                    nonce: await getNonce(walletCreationAddress)
-                });
+        // Create and deploy contract from the wallet creation account (blocking)
+        let receipt = await getWalletContract(null, walletCreationAddress)
+            .deploy({
+                arguments: [
+                    accountAddress // owner
+                ]
+            })
+            .send({
+                nonce: await getNonce(walletCreationAddress)
+            });
 
-            return {
-                encryptedAccount: encryptedAccount,
-                walletAddress: receipt.contractAddress
-            };
-        });
+        return {
+            encryptedAccount: encryptedAccount,
+            walletAddress: receipt.contractAddress
+        };
     }
 
     /**

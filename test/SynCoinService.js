@@ -4,7 +4,7 @@ const SynCoinService = require("../services/SynCoinService");
 require('dotenv').config({ path: 'dev.env' });
 
 // Set to true to log additional output
-const logging = true;
+const logging = false;
 function log() {
     if (logging) {
         console.log.apply({}, arguments);
