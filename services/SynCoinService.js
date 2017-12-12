@@ -16,41 +16,31 @@ const walletContractData = "0x60606040526040516020806102ee8339810160405280805190
 module.exports = function SynCoinService(web3Address, walletCreationAccount, shopContractAddress) {
     let web3 = new Web3(web3Address);
 
-    let noncesBlockHash = 0;
     let nonces = {};
 
     /**
      * Returns the nonce to be used for a transaction from a specific address.
      *
-     * This is to counteract a bug in Web3 that has een here for ages which practically disallows sending multiple transactions in one block from the same address.
+     * This is to counteract a bug in Web3 that has been there for ages which practically disallows sending multiple transactions in one block from the same address.
      * https://github.com/ethereum/go-ethereum/issues/2880
      *
-     * Updates to the current blockchain state when a new block is mined so it is kept as up-to-date as possible.
-     * Be wary that even if you do not use the obtained nonce it will still increment, making future transactions within the same block impossible.
+     * Corrects the nonce when Web3's getTransactionCount() is higher to TRY to prevent errors after external transactions.
+     * Be wary that even if you do not use the obtained nonce it will still increment, making future transactions from the address impossible.
      *
      * @param {string} address
      * @returns {Promise|Number}
      */
     async function getNonce(address) {
-        // TODO: Latest block might not have included all submitted transactions...
-        let blockHash = (await web3.eth.getBlock('latest', false)).hash;
+        // TODO: Alternative but way more complex solution to implement:
+        // Count increments and remove 1 nonce increment for an address on receipt, add increment to 'latest' count
 
-        if (blockHash != noncesBlockHash) {
-            // Clear in-memory nonces
-            nonces = {};
-            noncesBlockHash = blockHash;
-        }
+        let appNonce = nonces.hasOwnProperty(address) ? nonces[address] : 0;
+        let web3Nonce = await web3.eth.getTransactionCount(address, 'pending');
 
-        let nonce;
+        let nonce = Math.max(appNonce, web3Nonce);
 
-        // Return the incremented existing nonce or a freshly obtained one
-        if (nonces.hasOwnProperty(address)) {
-            nonce = nonces[address] + 1;
-        } else {
-            nonce = await web3.eth.getTransactionCount(address, 'pending');
-        }
-
-        nonces[address] = nonce;
+        // Store the incremented nonce for use in next request
+        nonces[address] = nonce + 1;
 
         return nonce;
     }
