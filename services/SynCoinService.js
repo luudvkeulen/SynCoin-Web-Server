@@ -149,9 +149,9 @@ module.exports = function SynCoinService(web3Address, walletCreationAccount, sho
         };
 
         // Simulate the transaction and check the result
-        let callResult = await sendMethod.call(transactionArguments);
+        let callResult = Number(await sendMethod.call(transactionArguments));
 
-        if (callResult != 1) {
+        if (callResult !== 1) {
             switch (callResult) {
                 case 2:
                     throw new Error('Transaction could not be performed because the sending account is not the wallet\'s owner');
@@ -160,7 +160,7 @@ module.exports = function SynCoinService(web3Address, walletCreationAccount, sho
                     throw new Error('Transaction failed to execute due to insufficient wallet funds or a failed contract call.');
 
                 default:
-                    throw new Error('Transaction could not be performed due to an unexpected exception.');
+                    throw new Error(`Transaction could not be performed due to an unexpected exception. (${callResult})`);
             }
         }
 
