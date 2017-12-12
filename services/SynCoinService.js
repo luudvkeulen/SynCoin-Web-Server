@@ -16,6 +16,44 @@ const walletContractData = "0x60606040526040516020806102ee8339810160405280805190
 module.exports = function SynCoinService(web3Address, walletCreationAccount, shopContractAddress) {
     let web3 = new Web3(web3Address);
 
+    let noncesBlockHash = 0;
+    let nonces = {};
+
+    /**
+     * Returns the nonce to be used for a transaction from a specific address.
+     *
+     * This is to counteract a bug in Web3 that has een here for ages which practically disallows sending multiple transactions in one block from the same address.
+     * https://github.com/ethereum/go-ethereum/issues/2880
+     *
+     * Updates to the current blockchain state when a new block is mined so it is kept as up-to-date as possible.
+     * Be wary that even if you do not use the obtained nonce it will still increment, making future transactions within the same block impossible.
+     *
+     * @param {string} address
+     * @returns {Promise|Number}
+     */
+    async function getNonce(address) {
+        let blockHash = (await web3.eth.getBlock('latest', false)).hash;
+
+        if (blockHash != noncesBlockHash) {
+            // Clear in-memory nonces
+            nonces = {};
+            noncesBlockHash = blockHash;
+        }
+
+        let nonce;
+
+        // Return the incremented existing nonce or a freshly obtained one
+        if (nonces.hasOwnProperty(address)) {
+            nonce = nonces[address] + 1;
+        } else {
+            nonce = await web3.eth.getTransactionCount(address, 'pending');
+        }
+
+        nonces[address] = nonce;
+
+        return nonce;
+    }
+
     /**
      * Creates an account (public-key pair) and a wallet contract owned by that account.
      * Funds the account with some dough to perform transactions.
@@ -29,28 +67,16 @@ module.exports = function SynCoinService(web3Address, walletCreationAccount, sho
         let accountAddress = addAccountToInMemoryWallet(encryptedAccount, password);
         let walletCreationAddress = addAccountToInMemoryWallet(walletCreationAccount);
 
-        // Used to prevent wallet creation using the same nonce (preventing underpriced replacement error)
-        // Web3 should be able to handle this if web3.eth.defaultBlock is set to 'pending'
-        // But it doesn't care ¯\_(ツ)_/¯ https://github.com/ethereum/go-ethereum/issues/2880
-        let nonce = await web3.eth.getTransactionCount(walletCreationAddress, 'pending');
-
-        console.log(nonce);
-
         let fundTransaction = {
             from: walletCreationAddress,
             to: accountAddress,
             value: web3.utils.toWei('1', 'ether'),
             gas: 1000000,
             gasPrice: 100000,
-            nonce: nonce
+            nonce: await getNonce(walletCreationAddress)
         };
 
         return new Promise(async (resolve, reject) => {
-            // Used to prevent wallet creation using the same nonce (preventing underpriced replacement error)
-            nonce = await web3.eth.getTransactionCount(walletCreationAddress, 'pending');
-
-            console.log(nonce);
-
             // Fund the account with money for transactions (non-blocking)
             await web3.eth.call(fundTransaction);
             web3.eth.sendTransaction(fundTransaction);
@@ -63,7 +89,7 @@ module.exports = function SynCoinService(web3Address, walletCreationAccount, sho
                     ]
                 })
                 .send({
-                    nonce: nonce
+                    nonce: await getNonce(walletCreationAddress)
                 })
                 .then((receipt) => {
                     resolve({
@@ -118,9 +144,12 @@ module.exports = function SynCoinService(web3Address, walletCreationAccount, sho
         }
 
         let sendMethod = walletContract.methods.send(toAddress, amount, data);
+        let transactionArguments = {
+            nonce: await getNonce(accountAddress)
+        };
 
         // Simulate the transaction and check the result
-        let callResult = await sendMethod.call();
+        let callResult = await sendMethod.call(transactionArguments);
 
         if (callResult != 1) {
             switch (callResult) {
@@ -137,7 +166,7 @@ module.exports = function SynCoinService(web3Address, walletCreationAccount, sho
 
         // Actually perform the transaction and resolve as soon as the transactionHash is known
         return new Promise((resolve, reject) => {
-            sendMethod.send()
+            sendMethod.send(transactionArguments)
                 .on("transactionHash", resolve)
                 .catch(reject);
         });
