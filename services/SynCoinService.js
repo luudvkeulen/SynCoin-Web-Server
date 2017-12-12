@@ -52,6 +52,8 @@ module.exports = function SynCoinService(web3Address, walletCreationAccount, sho
                                 encryptedAccount: encryptedAccount,
                                 walletAddress: receipt.contractAddress
                             });
+                        }).catch((error) => {
+                            reject(error);
                         });
                 })
                 .catch((error) => {

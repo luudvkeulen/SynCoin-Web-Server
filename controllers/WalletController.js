@@ -106,6 +106,7 @@ exports.drainOrder = function (req, res) {
 exports.createWallet = function (email, password, synCoinService) {
     return new Promise((resolve, reject) => {
         synCoinService.createWallet(password).then((encryptedAccount, walletAddress) => {
+            console.log("walletAddress: " + walletAddress);
             let newWallet = Wallet({
                 email: email,
                 walletAddress: walletAddress,
