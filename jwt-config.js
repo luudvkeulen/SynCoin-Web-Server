@@ -3,7 +3,7 @@ const jwt = require('jsonwebtoken');
 const passport = require('passport');
 const passportJWT = require('passport-jwt');
 
-const UserController = require('./controllers/UserController');
+const userService = require('./services/UserService');
 
 const jwtOptions = {
     jwtFromRequest: passportJWT.ExtractJwt.fromAuthHeaderAsBearerToken(),
@@ -11,7 +11,7 @@ const jwtOptions = {
 }
 
 const strategy = new passportJWT.Strategy(jwtOptions, (jwtPayload, next) => {
-    UserController.findByEmail(jwtPayload.email)
+    userService.findByEmail(jwtPayload.email)
         .then(user => {
             next(null, user);
         })

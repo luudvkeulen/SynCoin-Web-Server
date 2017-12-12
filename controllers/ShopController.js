@@ -65,7 +65,6 @@ module.exports.createOrder = async function (req, res) {
             reference: order.reference, 
         });
     } catch (error) {
-        console.log(error)
         res.status(500).json(error);
     }
 }
