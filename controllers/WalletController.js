@@ -2,8 +2,7 @@ const Wallet = require('./../schemas/wallet');
 const syncoinService = require("../services/SynCoinService");
 
 exports.verifyPassword = function (req, res) {
-    po
-    getEncryptedAccount(req.query.email).then((encryptedAccount) => {
+    getEncryptedAccount(req.user.email).then((encryptedAccount) => {
         return res.status(200).send(req.synCoinService.verifyPassword(encryptedAccount, req.query.password));
     }).catch((reject) => {
         return res.status(500).send(reject)
@@ -11,7 +10,7 @@ exports.verifyPassword = function (req, res) {
 };
 
 exports.getBalance = function (req, res) {
-    getEncryptedAccount(req.query.email).then((encryptedAccount) => {
+    getEncryptedAccount(req.user.email).then((encryptedAccount) => {
         req.synCoinService.getBalance(encryptedAccount.address).then(value => {
             return res.status(200).send(value);
         }, error => {
@@ -31,7 +30,7 @@ exports.walletTransactions = function (req, res) {
 };
 
 exports.sendTransaction = function (req, res) {
-    getEncryptedAccount(req.query.email).then((encryptedAccount) => {
+    getEncryptedAccount(req.user.email).then((encryptedAccount) => {
         req.synCoinService.sendTransaction(req.query.walletAddress, encryptedAccount, req.query.password, req.synCoinService.sendTransactionRequest(req.query.walletAddress, req.query.encryptedAccount, req.query.password, req.query.transactionRequest)).then(value => {
             return res.status(200).send(value);
         }, error => {
@@ -44,7 +43,7 @@ exports.sendTransaction = function (req, res) {
 };
 
 exports.createOrder = function (req, res) {
-    getEncryptedAccount(req.query.email).then((encryptedAccount) => {
+    getEncryptedAccount(req.user.email).then((encryptedAccount) => {
         req.synCoinService.sendTransaction(req.query.walletAddress, encryptedAccount, req.query.password, req.synCoinService.getOrderRequest(req.query.reference, req.query.amount)).then(value => {
             return res.status(200).send(value);
         }, error => {
@@ -56,7 +55,7 @@ exports.createOrder = function (req, res) {
 };
 
 exports.cancelOrder = function (req, res) {
-    getEncryptedAccount(req.query.email).then((encryptedAccount) => {
+    getEncryptedAccount(req.user.email).then((encryptedAccount) => {
         req.synCoinService.sendTransaction(req.query.walletAddress, encryptedAccount, req.query.password, req.synCoinService.getCancelRequest(req.query.reference)).then(value => {
             return res.status(200).send(value);
         }, error => {
@@ -68,7 +67,7 @@ exports.cancelOrder = function (req, res) {
 };
 
 exports.confirmReceived = function (req, res) {
-    getEncryptedAccount(req.query.email).then((encryptedAccount) => {
+    getEncryptedAccount(req.user.email).then((encryptedAccount) => {
         req.synCoinService.sendTransaction(req.query.walletAddress, encryptedAccount, req.query.password, req.synCoinService.getConfirmReceivedRequest(req.query.reference)).then(value => {
             return res.status(200).send(value);
         }, error => {
@@ -80,7 +79,7 @@ exports.confirmReceived = function (req, res) {
 };
 
 exports.confirmDelivering = function (req, res) {
-    getEncryptedAccount(req.query.email).then((encryptedAccount) => {
+    getEncryptedAccount(req.user.email).then((encryptedAccount) => {
         req.synCoinService.sendTransaction(req.query.walletAddress, encryptedAccount, req.query.password, req.synCoinService.getConfirmDeliveringRequest(req.query.reference)).then(value => {
             return res.status(200).send(value);
         }, error => {
@@ -92,7 +91,7 @@ exports.confirmDelivering = function (req, res) {
 };
 
 exports.drainOrder = function (req, res) {
-    getEncryptedAccount(req.query.email).then((encryptedAccount) => {
+    getEncryptedAccount(req.user.email).then((encryptedAccount) => {
         req.synCoinService.sendTransaction(req.query.walletAddress, encryptedAccount, req.query.password, req.synCoinService.getDrainRequest(req.query.reference)).then(value => {
             return res.status(200).send(value);
         }, error => {
