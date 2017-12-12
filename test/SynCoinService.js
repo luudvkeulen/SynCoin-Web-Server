@@ -297,12 +297,13 @@ describe("SynCoinService", function () {
                 log("Balance before drain:", balanceBefore);
 
                 let request = service.getDrainRequest();
-                await service.sendTransactionRequest(shopWalletAddress, encryptedShopAccount, "goodPassword", request);
+                let drainTransactionHash = await service.sendTransactionRequest(shopWalletAddress, encryptedShopAccount, "goodPassword", request);
+                await service.waitForConfirmation(drainTransactionHash);
 
                 let balanceAfter = await service.getBalance(shopWalletAddress);
 
                 log("Balance after drain:", balanceAfter);
-                assert(balanceBefore < balanceAfter);
+                assert(balanceBefore < balanceAfter, 'Drain did not increase shop wallet balance.');
             })
         });
     });
