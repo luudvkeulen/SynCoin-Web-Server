@@ -11,7 +11,6 @@ exports.login = function (req, res) {
     const synCoinService = req.synCoinService;
     const email = req.body.email;
     const password = req.body.password;
-<<<<<<< HEAD
     walletService.getEncryptedAccountByEmail(email)
         .then(encryptedAccount => {
             if (synCoinService.verifyPassword(encryptedAccount, password)) {
@@ -24,21 +23,6 @@ exports.login = function (req, res) {
             }
         })
         .catch(error => res.status(500).send(error));
-=======
-    walletController.findByEmail(email)
-        .then(wallet => {
-            if (synCoinService.verifyPassword(wallet.encryptedAccount, password)) {
-                const payload = {email: email};
-                const token = jwt.sign(payload, jwtOptions.secretOrKey);
-                return res.json({token: token});
-            } else {
-                return res.status(400).send({error: 'Incorrect password'});
-            }
-        })
-        .catch(error => {
-            return res.status(500).send(error)
-        });
->>>>>>> master
 };
 
 exports.jwtTest = function (req, res) {
