@@ -32,260 +32,272 @@ describe("SynCoinService", function () {
         );
     });
 
-    let createWalletResult;
+    describe("Wallet creation", () => {
+        let createWalletResult;
 
-    describe("#createWallet", () => {
-        it("should be able to create a wallet", async () => {
-            let result = await service.createWallet("goodPassword");
+        describe("#createWallet", () => {
+            it("should be able to create a wallet", async () => {
+                let result = await service.createWallet("goodPassword");
 
-            assert.ok(result.encryptedAccount.address);
-            assert.ok(result.encryptedAccount.crypto);
-            assert.ok(result.walletAddress);
+                assert.ok(result.encryptedAccount.address);
+                assert.ok(result.encryptedAccount.crypto);
+                assert.ok(result.walletAddress);
 
-            log("Wallet address: " + result.walletAddress);
-            log("Encrypted account: " + JSON.stringify(result.encryptedAccount));
+                log("Wallet address: " + result.walletAddress);
+                log("Encrypted account: " + JSON.stringify(result.encryptedAccount));
 
-            createWalletResult = result;
+                createWalletResult = result;
+            });
+
+            it("should fund the account with transaction money", async () => {
+                let balance = await service.getBalance(createWalletResult.encryptedAccount.address)
+                assert(balance > 0);
+            });
         });
 
-        it("should fund the account with transaction money", async () => {
-            let balance = await service.getBalance(createWalletResult.encryptedAccount.address)
-            assert(balance > 0);
-        });
-    });
+        describe("#verifyPassword", () => {
+            it("should return false when the password is invalid", () => {
+                assert(!service.verifyPassword(createWalletResult.encryptedAccount, "badPassword"));
+            });
 
-    describe("#verifyPassword", () => {
-        it("should return false when the password is invalid", () => {
-            assert(!service.verifyPassword(createWalletResult.encryptedAccount, "badPassword"));
-        });
-
-        it("should return true when the password is valid", () => {
-            assert(service.verifyPassword(createWalletResult.encryptedAccount, "goodPassword"));
-        });
-    });
-
-    let sendTransactionHash;
-
-    describe("#sendTransaction", () => {
-        it("should be able to send a transaction to a wallet", async () => {
-            log("Sending transaction...");
-            let transactionHash = await service.sendTransaction(userWalletAddress, encryptedUserAccount,
-                "goodPassword", shopWalletAddress, 999);
-
-            assert(transactionHash);
-            log("TransactionHash: " + transactionHash);
-        });
-
-        it("should be able to send a transaction from the shop wallet", async () => {
-            log("Sending transaction...");
-            let transactionHash = await service.sendTransaction(shopWalletAddress, encryptedShopAccount,
-                "goodPassword", userWalletAddress, 999);
-
-            assert(transactionHash);
-
-            log("TransactionHash: " + transactionHash);
-
-            sendTransactionHash = transactionHash;
+            it("should return true when the password is valid", () => {
+                assert(service.verifyPassword(createWalletResult.encryptedAccount, "goodPassword"));
+            });
         });
     });
 
-    describe("#getConfirmations", () => {
-        it("should not return the previous transaction as being confirmed", async () => {
-            let confirmations = await service.getConfirmations(sendTransactionHash);
-            assert(confirmations === 0);
+    describe("Basic blockchain interaction", () => {
+        let sendTransactionHash;
+
+        describe("#sendTransaction", () => {
+            it("should be able to send a transaction to a wallet", async () => {
+                log("Sending transaction...");
+                let transactionHash = await service.sendTransaction(userWalletAddress, encryptedUserAccount,
+                    "goodPassword", shopWalletAddress, 999);
+
+                assert(transactionHash);
+                log("TransactionHash: " + transactionHash);
+            });
+
+            it("should be able to send a transaction from the shop wallet", async () => {
+                log("Sending transaction...");
+                let transactionHash = await service.sendTransaction(shopWalletAddress, encryptedShopAccount,
+                    "goodPassword", userWalletAddress, 999);
+
+                assert(transactionHash);
+
+                log("TransactionHash: " + transactionHash);
+
+                sendTransactionHash = transactionHash;
+            });
         });
 
-        it("should return zero for an invalid transaction hash", async () => {
-            let confirmations = await service.getConfirmations("0xeeeeeeeeeeeeeeeeee");
-            assert(confirmations === 0);
-        })
-    });
+        describe("#getConfirmations", () => {
+            it("should not return the previous transaction as being confirmed", async () => {
+                let confirmations = await service.getConfirmations(sendTransactionHash);
+                assert(confirmations === 0);
+            });
 
-    describe("#waitForConfirmation", () => {
-        it("should wait for the previous transaction to be confirmed", async () => {
-            await service.waitForConfirmation(sendTransactionHash);
-
-            let confirmations = await service.getConfirmations(sendTransactionHash);
-            assert(confirmations > 0);
+            it("should return zero for an invalid transaction hash", async () => {
+                let confirmations = await service.getConfirmations("0xeeeeeeeeeeeeeeeeee");
+                assert(confirmations === 0);
+            })
         });
 
-        it("should not hang in waiting when it is already confirmed", async () => {
-            await service.waitForConfirmation(sendTransactionHash);
-        });
-    });
+        describe("#waitForConfirmation", () => {
+            it("should wait for the previous transaction to be confirmed", async () => {
+                await service.waitForConfirmation(sendTransactionHash);
 
-    describe("#getWalletTransactions", () => {
-        it("should be able to retrieve all transactions from a wallet", async () => {
-            let transactions = await service.getWalletTransactions(userWalletAddress);
+                let confirmations = await service.getConfirmations(sendTransactionHash);
+                assert(confirmations > 0);
+            });
 
-            assert(transactions.length > 0);
-
-            log("First transaction:", transactions[0]);
-
-            assert(transactions[0].counterAddress);
-        });
-    });
-
-    describe("#getBalance", () => {
-        it("should be able to get balance of the user account", async () => {
-            let balance = await service.getBalance(encryptedUserAccount.address);
-
-            log("User account balance:", balance);
-            assert(balance > 0);
+            it("should not hang in waiting when it is already confirmed", async () => {
+                await service.waitForConfirmation(sendTransactionHash);
+            });
         });
 
-        it("should be able to get balance of the shop account", async () => {
-            let balance = await service.getBalance(encryptedShopAccount.address);
+        describe("#getWalletTransactions", () => {
+            it("should be able to retrieve all transactions from a wallet", async () => {
+                let transactions = await service.getWalletTransactions(userWalletAddress);
 
-            log("Shop account balance:", balance);
-            assert(balance > 0);
+                assert(transactions.length > 0);
+
+                log("First transaction:", transactions[0]);
+
+                assert(transactions[0].counterAddress);
+            });
         });
 
-        it("should be able to get balance of the user wallet", async () => {
-            let balance = await service.getBalance(userWalletAddress);
-            log("User wallet balance:", balance);
-            assert(balance > 0);
-        });
+        describe("#getBalance", () => {
+            it("should be able to get balance of the user account", async () => {
+                let balance = await service.getBalance(encryptedUserAccount.address);
 
-        it("should be able to get balance of the shop wallet", async () => {
-            let balance = await service.getBalance(userWalletAddress)
-            log("Shop wallet balance:", balance);
-            assert(balance > 0);
-        });
-    });
+                log("User account balance:", balance);
+                assert(balance > 0);
+            });
 
-    let orderReference1 = "unitTestOrder1-" + Math.floor(Math.random() * 1000000);
-    let orderReference2 = "unitTestOrder2-" + Math.floor(Math.random() * 1000000);
+            it("should be able to get balance of the shop account", async () => {
+                let balance = await service.getBalance(encryptedShopAccount.address);
 
-    let order1TransactionHash;
-    let order2TransactionHash;
+                log("Shop account balance:", balance);
+                assert(balance > 0);
+            });
 
-    describe("#order", () => {
-        log("Test order references: ", orderReference1, orderReference2);
+            it("should be able to get balance of the user wallet", async () => {
+                let balance = await service.getBalance(userWalletAddress);
+                log("User wallet balance:", balance);
+                assert(balance > 0);
+            });
 
-        let orderRequest1;
-
-        it("should successfully create an order", async () => {
-            // Two orders, so that one can be canceled where the other can still be completed
-            orderRequest1 = service.getOrderRequest(orderReference1, 10);
-            order1TransactionHash = await service.sendTransactionRequest(userWalletAddress, encryptedUserAccount, "goodPassword", orderRequest1);
-
-            let orderRequest2 = service.getOrderRequest(orderReference2, 10);
-            order2TransactionHash = await service.sendTransactionRequest(userWalletAddress, encryptedUserAccount, "goodPassword", orderRequest2);
-        });
-
-        it("should fail to create an order with the same reference twice", async () => {
-            try {
-                await service.sendTransactionRequest(userWalletAddress, encryptedUserAccount, "goodPassword", orderRequest1);
-            } catch (error) {
-            }
-        });
-    });
-
-    describe("#cancelOrder", () => {
-        let cancel2TransactionHash;
-        let walletBalanceBeforeCancel;
-
-        it("should be able to cancel the order immediately after creating it", async () => {
-            log("Waiting for order transaction to be mined...");
-            await service.waitForConfirmation(order2TransactionHash);
-
-            walletBalanceBeforeCancel = await service.getBalance(userWalletAddress);
-
-            let request = service.getCancelRequest(orderReference2);
-            cancel2TransactionHash = await service.sendTransactionRequest(userWalletAddress, encryptedUserAccount, "goodPassword", request);
-        });
-
-        it("should refund the spent currency", async () => {
-            log("Waiting for order 2 cancel transaction to confirm...");
-            await service.waitForConfirmation(cancel2TransactionHash);
-
-            let balance = await service.getBalance(userWalletAddress);
-
-            log("Balance before cancel:", walletBalanceBeforeCancel);
-            log("Balance after cancel:", balance);
-
-            assert(balance > walletBalanceBeforeCancel);
+            it("should be able to get balance of the shop wallet", async () => {
+                let balance = await service.getBalance(userWalletAddress)
+                log("Shop wallet balance:", balance);
+                assert(balance > 0);
+            });
         });
     });
 
-    let confirmDeliveringTransactionHash;
+    describe("Shop interaction", () => {
+        let orderReference1 = "unitTestOrder1-" + Math.floor(Math.random() * 1000000);
+        let orderReference2 = "unitTestOrder2-" + Math.floor(Math.random() * 1000000);
 
-    describe("#confirmDelivering", () => {
-        it("should not be able to confirm received before delivering", async () => {
-            log("Waiting for order 1 to be created first...");
-            await service.waitForConfirmation(order1TransactionHash);
+        let order1TransactionHash;
+        let order2TransactionHash;
 
-            let request = service.getConfirmReceivedRequest(orderReference1);
-            try {
+        describe("#order", () => {
+            log("Test order 1 reference:", orderReference1);
+            log("Test order 2 reference:", orderReference2);
+
+            let orderRequest1;
+
+            it("should successfully create an order", async () => {
+                // Two orders, so that one can be canceled whereas the other can still be completed
+                orderRequest1 = service.getOrderRequest(orderReference1, 10);
+                order1TransactionHash = await service.sendTransactionRequest(userWalletAddress, encryptedUserAccount, "goodPassword", orderRequest1);
+
+                let orderRequest2 = service.getOrderRequest(orderReference2, 10);
+                order2TransactionHash = await service.sendTransactionRequest(userWalletAddress, encryptedUserAccount, "goodPassword", orderRequest2);
+            });
+
+            it("should fail to create an order with the same reference twice", async () => {
+                try {
+                    await service.sendTransactionRequest(userWalletAddress, encryptedUserAccount, "goodPassword", orderRequest1);
+                } catch (error) {
+                }
+            });
+        });
+
+        describe("#cancelOrder", () => {
+            let cancel2TransactionHash;
+            let walletBalanceBeforeCancel;
+
+            it("wait for order 2 transaction to be mined and get balance", async () => {
+                await service.waitForConfirmation(order2TransactionHash);
+
+                walletBalanceBeforeCancel = await service.getBalance(userWalletAddress);
+            });
+
+            it("should be able to cancel the order immediately after creating it", async () => {
+                let request = service.getCancelRequest(orderReference2);
+                cancel2TransactionHash = await service.sendTransactionRequest(userWalletAddress, encryptedUserAccount, "goodPassword", request);
+            });
+
+            it("cancelling should refund the spent currency", async () => {
+                log("Waiting for order 2 cancel transaction to confirm...");
+                await service.waitForConfirmation(cancel2TransactionHash);
+
+                let balance = await service.getBalance(userWalletAddress);
+
+                log("Balance before cancel:", walletBalanceBeforeCancel);
+                log("Balance after cancel:", balance);
+
+                assert(balance > walletBalanceBeforeCancel);
+            });
+        });
+
+        let confirmDeliveringTransactionHash;
+
+        describe("#confirmDelivering", () => {
+            it("wait for order 1 creation transaction to be mined...", async () => {
+                await service.waitForConfirmation(order1TransactionHash);
+            });
+
+            it("should not be able to confirm received before delivering", async () => {
+                let request = service.getConfirmReceivedRequest(orderReference1);
+                try {
+                    await service.sendTransactionRequest(userWalletAddress, encryptedUserAccount, "goodPassword", request);
+                    assert.fail();
+                } catch (error) {
+                }
+            });
+
+            it("should not be able to confirm delivering from the customer", async () => {
+                let request = service.getConfirmDeliveringRequest(orderReference1);
+                try {
+                    await service.sendTransactionRequest(userWalletAddress, encryptedUserAccount, "goodPassword", request);
+                    assert.fail();
+                } catch (error) {
+                }
+            });
+
+            it("should not be able to confirm delivering after it has been canceled", async () => {
+                let request = service.getConfirmDeliveringRequest(orderReference2);
+                try {
+                    await service.sendTransactionRequest(shopWalletAddress, encryptedShopAccount, "goodPassword", request);
+                    assert.fail();
+                } catch (error) {
+                }
+            });
+
+            it("should be able to confirm delivering as the shop owner", async () => {
+                let request = service.getConfirmDeliveringRequest(orderReference1);
+                confirmDeliveringTransactionHash = await service.sendTransactionRequest(shopWalletAddress, encryptedShopAccount, "goodPassword", request);
+            });
+        });
+
+        describe("#confirmReceived", () => {
+            it("wait for confirmDelivering transaction to be mined...", async () => {
+                log("confirmDelivering transaction hash:", confirmDeliveringTransactionHash);
+
+                await service.waitForConfirmation(confirmDeliveringTransactionHash);
+            });
+
+            it("should successfully confirm received after being confirmed delivering", async () => {
+                let request = service.getConfirmReceivedRequest(orderReference1);
                 await service.sendTransactionRequest(userWalletAddress, encryptedUserAccount, "goodPassword", request);
-                assert.fail();
-            } catch (error) {
-            }
+            });
         });
 
-        it("should not be able to confirm delivering from the customer", async () => {
-            let request = service.getConfirmDeliveringRequest(orderReference1);
-            try {
-                await service.sendTransactionRequest(userWalletAddress, encryptedUserAccount, "goodPassword", request);
-                assert.fail();
-            } catch (error) {
-            }
+        describe("#getOrderStatusUpdates", () => {
+            it("should be able to find some global order status updates", async () => {
+                let updates = await service.getOrderStatusUpdates();
+                assert(updates.length > 0);
+                log("Earliest update:", updates[0]);
+            });
+
+            it("should be able to find order status updates for the created unit test order", async () => {
+                let updates = await service.getOrderStatusUpdates(orderReference1);
+                assert(updates.length > 0);
+                log("Earliest unit test update:", updates[0]);
+            });
         });
 
-        it("should not be able to confirm delivering after it has been canceled", async () => {
-            let request = service.getConfirmDeliveringRequest(orderReference2);
-            try {
+        describe("#drain", () => {
+            it("should be able to drain the shop", async () => {
+                let balanceBefore = await service.getBalance(shopWalletAddress);
+
+                log("Balance before drain:", balanceBefore);
+
+                let request = service.getDrainRequest();
                 await service.sendTransactionRequest(shopWalletAddress, encryptedShopAccount, "goodPassword", request);
-                assert.fail();
-            } catch (error) {
-            }
+
+                let balanceAfter = await service.getBalance(shopWalletAddress);
+
+                log("Balance after drain:", balanceAfter);
+                assert(balanceBefore < balanceAfter);
+            })
         });
-
-        it("should be able to confirm delivering as the shop owner", async () => {
-            let request = service.getConfirmDeliveringRequest(orderReference1);
-            confirmDeliveringTransactionHash = await service.sendTransactionRequest(shopWalletAddress, encryptedShopAccount, "goodPassword", request);
-        });
-    });
-
-    describe("#confirmReceived", () => {
-        it("should successfully confirm received after being confirmed delivering", async () => {
-            log("Waiting for confirm delivering to be mined first...");
-            await service.waitForConfirmation(confirmDeliveringTransactionHash);
-
-            let request = service.getConfirmReceivedRequest(orderReference1);
-            await service.sendTransactionRequest(userWalletAddress, encryptedUserAccount, "goodPassword", request);
-        });
-    });
-
-    describe("#getOrderStatusUpdates", () => {
-        it("should be able to find some global order status updates", async () => {
-            let updates = await service.getOrderStatusUpdates();
-            assert(updates.length > 0);
-            log("Earliest update:", updates[0]);
-        });
-
-        it("should be able to find order status updates for the created unit test order", async () => {
-            let updates = await service.getOrderStatusUpdates(orderReference1);
-            assert(updates.length > 0);
-            log("Earliest unit test update:", updates[0]);
-        });
-    });
-
-    describe("#drain", () => {
-        it("should be able to drain the shop", async () => {
-            let balanceBefore = await service.getBalance(shopWalletAddress);
-
-            log("Balance before drain:", balanceBefore);
-
-            let request = service.getDrainRequest();
-            await service.sendTransactionRequest(shopWalletAddress, encryptedShopAccount, "goodPassword", request);
-
-            let balanceAfter = await service.getBalance(shopWalletAddress);
-
-            log("Balance after drain:", balanceAfter);
-            assert(balanceBefore < balanceAfter);
-        })
     });
 
     describe("#deployShopContract", () => {
