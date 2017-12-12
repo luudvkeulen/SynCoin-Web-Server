@@ -102,13 +102,13 @@ exports.drainOrder = function (req, res) {
     });
 };
 
-exports.createWallet = function (email, password) {
+exports.createWallet = function (email, password, synCoinService) {
     return new Promise((resolve, reject) => {
-        req.synCoinService.createWallet(password).then((encryptedAccount, walletAddress) => {
+        synCoinService.createWallet(password).then((encryptedAccount, walletAddress) => {
             let newWallet = Wallet({
                 email: email,
                 walletAddress: walletAddress,
-                encryptedAccount: encryptedAccount
+                encryptedAccount: encryptedAccount.encryptedAccount
             });
 
             newWallet.save((err) => {
@@ -119,9 +119,7 @@ exports.createWallet = function (email, password) {
 
                 resolve();
             });
-        }).catch((err) => {
-            reject(err);
-        });
+        }).catch(err => reject(err));
     });
 };
 
