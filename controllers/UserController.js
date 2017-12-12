@@ -4,11 +4,27 @@ const jwt = require('jsonwebtoken');
 const {passport, jwtOptions} = require('./../jwt-config');
 
 const walletController = require('../controllers/WalletController');
+const userService = require('../services/UserService');
+const walletService = require('../services/WalletService');
 
 exports.login = function (req, res) {
     const synCoinService = req.synCoinService;
     const email = req.body.email;
     const password = req.body.password;
+<<<<<<< HEAD
+    walletService.getEncryptedAccountByEmail(email)
+        .then(encryptedAccount => {
+            if (synCoinService.verifyPassword(encryptedAccount, password)) {
+                const payload = { email: email };
+                const token = jwt.sign(payload, jwtOptions.secretOrKey);
+                return res.status(200).json({ token: token });
+            } else {
+                console.log('incorrect password');
+                return res.status(400).send({ error: 'Incorrect password' });
+            }
+        })
+        .catch(error => res.status(500).send(error));
+=======
     walletController.findByEmail(email)
         .then(wallet => {
             if (synCoinService.verifyPassword(wallet.encryptedAccount, password)) {
@@ -22,6 +38,7 @@ exports.login = function (req, res) {
         .catch(error => {
             return res.status(500).send(error)
         });
+>>>>>>> master
 };
 
 exports.jwtTest = function (req, res) {
@@ -64,15 +81,15 @@ exports.register = function (req, res) {
         });
 };
 
-function findByEmail(email) {
+exports.findByEmail = function(email) {
     return new Promise((resolve, reject) => {
-        User.findOne({'email': email}, (error, result) => {
+        User.findOne({ 'email': email }, (error, result) => {
             if (error) {
                 reject(error);
                 return;
             }
             if (!result) {
-                reject({message: 'No user found with the given token'});
+                reject({ message: 'No user found with the given token' });
                 return;
             }
             resolve(result);

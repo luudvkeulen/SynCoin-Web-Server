@@ -1,4 +1,5 @@
 const Wallet = require('./../schemas/wallet');
+const syncoinService = require("../services/SynCoinService");
 
 exports.verifyPassword = function (req, res) {
     po
