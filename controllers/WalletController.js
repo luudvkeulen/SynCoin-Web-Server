@@ -1,13 +1,11 @@
 const Wallet = require('./../schemas/wallet');
 const syncoinService = require("../services/SynCoinService");
+const walletService = require('../services/WalletService');
 
 exports.verifyPassword = function (req, res) {
-    po
     getEncryptedAccount(req.query.email).then((encryptedAccount) => {
         return res.status(200).send(req.synCoinService.verifyPassword(encryptedAccount, req.query.password));
-    }).catch((reject) => {
-        return res.status(500).send(reject)
-    });
+    }).catch((reject) => { return res.status(500).send(reject) });
 };
 
 exports.getBalance = function (req, res) {
@@ -17,9 +15,7 @@ exports.getBalance = function (req, res) {
         }, error => {
             return res.status(500).send(error);
         });
-    }).catch((reject) => {
-        return res.status(500).send(reject)
-    });
+    }).catch((reject) => { return res.status(500).send(reject) });
 };
 
 exports.walletTransactions = function (req, res) {
@@ -31,15 +27,17 @@ exports.walletTransactions = function (req, res) {
 };
 
 exports.sendTransaction = function (req, res) {
-    getEncryptedAccount(req.query.email).then((encryptedAccount) => {
-        req.synCoinService.sendTransaction(req.query.walletAddress, encryptedAccount, req.query.password, req.synCoinService.sendTransactionRequest(req.query.walletAddress, req.query.encryptedAccount, req.query.password, req.query.transactionRequest)).then(value => {
+    walletService.getWalletByEmail(req.user.email).then((wallet) => {
+        console.log(req.body);
+        req.synCoinService.sendTransaction(wallet.walletAddress, wallet.encryptedAccount, req.body.password, req.body.address, req.body.amount, req.body.data).then(value => {
             return res.status(200).send(value);
         }, error => {
+            console.log(error);
             return res.status(500).send(error);
         });
 
-    }).catch((reject) => {
-        return res.status(500).send(reject)
+    }).catch((error) => { 
+        return res.status(500).send(error) 
     });
 };
 
@@ -50,9 +48,7 @@ exports.createOrder = function (req, res) {
         }, error => {
             return res.status(500).send(error);
         });
-    }).catch((reject) => {
-        return res.status(500).send(reject)
-    });
+    }).catch((reject) => { return res.status(500).send(reject) });
 };
 
 exports.cancelOrder = function (req, res) {
@@ -62,9 +58,7 @@ exports.cancelOrder = function (req, res) {
         }, error => {
             return res.status(500).send(error);
         });
-    }).catch((reject) => {
-        return res.status(500).send(reject)
-    });
+    }).catch((reject) => { return res.status(500).send(reject) });
 };
 
 exports.confirmReceived = function (req, res) {
@@ -74,9 +68,7 @@ exports.confirmReceived = function (req, res) {
         }, error => {
             return res.status(500).send(error);
         });
-    }).catch((reject) => {
-        return res.status(500).send(reject)
-    });
+    }).catch((reject) => { return res.status(500).send(reject) });
 };
 
 exports.confirmDelivering = function (req, res) {
@@ -86,9 +78,7 @@ exports.confirmDelivering = function (req, res) {
         }, error => {
             return res.status(500).send(error);
         });
-    }).catch((reject) => {
-        return res.status(500).send(reject)
-    });
+    }).catch((reject) => { return res.status(500).send(reject) });
 };
 
 exports.drainOrder = function (req, res) {
@@ -98,37 +88,14 @@ exports.drainOrder = function (req, res) {
         }, error => {
             return res.status(500).send(error);
         });
-    }).catch((reject) => {
-        return res.status(500).send(reject);
-    });
+    }).catch((reject) => { return res.status(500).send(reject) });
 };
 
-exports.createWallet = function (email, password, synCoinService) {
+function getEncryptedAccount(email) {
     return new Promise((resolve, reject) => {
-        synCoinService.createWallet(password).then((encryptedAccount, walletAddress) => {
-            let newWallet = Wallet({
-                email: email,
-                walletAddress: walletAddress,
-                encryptedAccount: encryptedAccount.encryptedAccount
-            });
-
-            newWallet.save((err) => {
-                if (err) {
-                    reject(err);
-                    return;
-                }
-
-                resolve();
-            });
-        }).catch(err => reject(err));
-    });
-};
-
-getEncryptedAccount = function (email) {
-    return new Promise((resolve, reject) => {
-        Wallet.findOne({email: email}, (err, wallet) => {
+        Wallet.findOne({ email: email }, (err, wallet) => {
             if (err) reject(err);
             resolve(wallet.encryptedAccount);
         });
     });
-};
+}
