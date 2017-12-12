@@ -166,12 +166,13 @@ describe("SynCoinService", function () {
         let order2TransactionHash;
 
         describe("#order", () => {
-            log("Test order references: ", orderReference1, orderReference2);
+            log("Test order 1 reference:", orderReference1);
+            log("Test order 2 reference:", orderReference2);
 
             let orderRequest1;
 
             it("should successfully create an order", async () => {
-                // Two orders, so that one can be canceled where the other can still be completed
+                // Two orders, so that one can be canceled whereas the other can still be completed
                 orderRequest1 = service.getOrderRequest(orderReference1, 10);
                 order1TransactionHash = await service.sendTransactionRequest(userWalletAddress, encryptedUserAccount, "goodPassword", orderRequest1);
 
@@ -202,7 +203,7 @@ describe("SynCoinService", function () {
                 cancel2TransactionHash = await service.sendTransactionRequest(userWalletAddress, encryptedUserAccount, "goodPassword", request);
             });
 
-            it("should refund the spent currency", async () => {
+            it("cancelling should refund the spent currency", async () => {
                 log("Waiting for order 2 cancel transaction to confirm...");
                 await service.waitForConfirmation(cancel2TransactionHash);
 
@@ -257,6 +258,8 @@ describe("SynCoinService", function () {
 
         describe("#confirmReceived", () => {
             it("wait for confirmDelivering transaction to be mined...", async () => {
+                log("confirmDelivering transaction hash:", confirmDeliveringTransactionHash);
+
                 await service.waitForConfirmation(confirmDeliveringTransactionHash);
             });
 
