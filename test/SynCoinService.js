@@ -151,7 +151,7 @@ describe("SynCoinService", function () {
             });
 
             it("should be able to get balance of the shop wallet", async () => {
-                let balance = await service.getBalance(userWalletAddress)
+                let balance = await service.getBalance(userWalletAddress);
                 log("Shop wallet balance:", balance);
                 assert(balance > 0);
             });
@@ -216,10 +216,8 @@ describe("SynCoinService", function () {
             });
         });
 
-        let confirmDeliveringTransactionHash;
-
         describe("#confirmDelivering", () => {
-            it("wait for order 1 creation transaction to be mined...", async () => {
+            it("wait for order 1 creation transaction to be mined", async () => {
                 await service.waitForConfirmation(order1TransactionHash);
             });
 
@@ -250,22 +248,30 @@ describe("SynCoinService", function () {
                 }
             });
 
+            let confirmDeliveringTransactionHash;
+
             it("should be able to confirm delivering as the shop owner", async () => {
                 let request = service.getConfirmDeliveringRequest(orderReference1);
                 confirmDeliveringTransactionHash = await service.sendTransactionRequest(shopWalletAddress, encryptedShopAccount, "goodPassword", request);
+
+                log("confirmDelivering transaction hash:", confirmDeliveringTransactionHash);
+            });
+
+            it("wait for confirmDelivering transaction to be mined", async () => {
+                await service.waitForConfirmation(confirmDeliveringTransactionHash);
             });
         });
 
         describe("#confirmReceived", () => {
-            it("wait for confirmDelivering transaction to be mined...", async () => {
-                log("confirmDelivering transaction hash:", confirmDeliveringTransactionHash);
-
-                await service.waitForConfirmation(confirmDeliveringTransactionHash);
-            });
+            let confirmReceivedTransactionHash;
 
             it("should successfully confirm received after being confirmed delivering", async () => {
                 let request = service.getConfirmReceivedRequest(orderReference1);
-                await service.sendTransactionRequest(userWalletAddress, encryptedUserAccount, "goodPassword", request);
+                confirmReceivedTransactionHash = await service.sendTransactionRequest(userWalletAddress, encryptedUserAccount, "goodPassword", request);
+            });
+
+            it("wait for confirm received to be mined", async () => {
+                await service.waitForConfirmation(confirmReceivedTransactionHash);
             });
         });
 
