@@ -1,16 +1,18 @@
-var express = require('express');
-var router = express.Router();
+const express = require('express');
+const router = express.Router();
+const walletController = require('../controllers/WalletController');
 
-const { passport, jwtOptions } = require('./../jwt-config');
+const jwt = require('jsonwebtoken');
+const {passport} = require('./../jwt-config');
 
-var walletController = require('../controllers/WalletController');
+const prefix = '/wallet';
 
-router.post('/tx',  passport.authenticate('jwt', { session: false }), walletController.sendTransaction);
+router.post(prefix + '/tx', passport.authenticate('jwt', {session: false}), walletController.sendTransaction);
 
-router.get('/tx', passport.authenticate('jwt', { session: false }), walletController.walletTransactions);
+router.get(prefix + '/balance', passport.authenticate('jwt', {session: false}), walletController.getBalance);
 
-router.get('/balance', passport.authenticate('jwt', { session: false }), walletController.getBalance);
+router.get(prefix + '/tx', passport.authenticate('jwt', { session: false }), walletController.walletTransactions);
 
-router.get('/verifypassword', passport.authenticate('jwt', { session: false }), walletController.verifyPassword);
+router.get(prefix + '/verifypassword', passport.authenticate('jwt', { session: false }), walletController.verifyPassword);
 
 module.exports = router;
