@@ -17,7 +17,9 @@ exports.getBalance = function (req, res) {
         }, error => {
             return res.status(500).send(error);
         });
-    }).catch((reject) => { return res.status(500).send(reject) });
+    }).catch((reject) => { 
+        return res.status(500).send(reject)
+    });
 };
 
 exports.walletTransactions = function (req, res) {
@@ -30,11 +32,9 @@ exports.walletTransactions = function (req, res) {
 
 exports.sendTransaction = function (req, res) {
     find(req.user.email).then((wallet) => {
-        console.log(wallet, req.body)
         req.synCoinService.sendTransaction(wallet.walletAddress, wallet.encryptedAccount, req.body.password, req.body.address, req.body.amount, req.body.data).then(value => {
             return res.status(200).send(value);
         }, error => {
-            console.log(error);
             return res.status(500).send(error);
         });
 
@@ -97,11 +97,11 @@ exports.drainOrder = function (req, res) {
 
 exports.createWallet = function (email, password, synCoinService) {
     return new Promise((resolve, reject) => {
-        synCoinService.createWallet(password).then((encryptedAccount, walletAddress) => {
+        synCoinService.createWallet(password).then((result) => {
             let newWallet = new Wallet({
                 email: email,
-                walletAddress: walletAddress,
-                encryptedAccount: encryptedAccount.encryptedAccount
+                walletAddress: result.walletAddress,
+                encryptedAccount: result.encryptedAccount
             });
 
             newWallet.save((err) => {
