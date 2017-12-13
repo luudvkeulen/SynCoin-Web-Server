@@ -16,42 +16,43 @@ const walletContractData = "0x60606040526040516020806102ee8339810160405280805190
 module.exports = function SynCoinService(web3Address, walletCreationAccount, shopContractAddress) {
     let web3 = new Web3(web3Address);
 
-    let noncesBlockHash = 0;
     let nonces = {};
 
     /**
      * Returns the nonce to be used for a transaction from a specific address.
      *
-     * This is to counteract a bug in Web3 that has een here for ages which practically disallows sending multiple transactions in one block from the same address.
+     * This is to counteract a bug in Web3 that has been there for ages which practically disallows sending multiple transactions in one block from the same address.
      * https://github.com/ethereum/go-ethereum/issues/2880
      *
-     * Updates to the current blockchain state when a new block is mined so it is kept as up-to-date as possible.
-     * Be wary that even if you do not use the obtained nonce it will still increment, making future transactions within the same block impossible.
+     * Corrects the nonce when Web3's getTransactionCount() is higher to TRY to prevent errors after external transactions.
+     * Make sure to call discardNonce() if you decide not to use the generated nonce, to decrement it.
+     *
+     * This entire system will fail dramatically as soon as a transaction is submitted but fails to execute, in which case the nonce will increment anyway and will remain too high.
      *
      * @param {string} address
      * @returns {Promise|Number}
      */
     async function getNonce(address) {
-        let blockHash = (await web3.eth.getBlock('latest', false)).hash;
+        // TODO: Alternative but way more complex solution to implement:
+        // Count increments and remove 1 nonce increment for an address on receipt, add increment to 'latest' count
 
-        if (blockHash != noncesBlockHash) {
-            // Clear in-memory nonces
-            nonces = {};
-            noncesBlockHash = blockHash;
-        }
+        let appNonce = nonces.hasOwnProperty(address) ? nonces[address] : 0;
+        let web3Nonce = await web3.eth.getTransactionCount(address, 'pending');
 
-        let nonce;
+        let nonce = Math.max(appNonce, web3Nonce);
 
-        // Return the incremented existing nonce or a freshly obtained one
-        if (nonces.hasOwnProperty(address)) {
-            nonce = nonces[address] + 1;
-        } else {
-            nonce = await web3.eth.getTransactionCount(address, 'pending');
-        }
-
-        nonces[address] = nonce;
+        // Increment nonce for use in the next transaction from this address.
+        nonces[address] = nonce + 1;
 
         return nonce;
+    }
+
+    /**
+     * Decrements the nonce counter for an address.
+     * Run this when you requested a nonce but did not submit a transaction.
+     */
+    function discardNonce(address) {
+        nonces[address]--;
     }
 
     /**
@@ -148,6 +149,8 @@ module.exports = function SynCoinService(web3Address, walletCreationAccount, sho
         let callResult = Number(await sendMethod.call(transactionArguments));
 
         if (callResult !== 1) {
+            discardNonce(accountAddress);
+
             switch (callResult) {
                 case 2:
                     throw new Error('Transaction could not be performed because the sending account is not the wallet\'s owner');
@@ -193,7 +196,14 @@ module.exports = function SynCoinService(web3Address, walletCreationAccount, sho
     async function getConfirmations(transactionHash) {
         try {
             let transaction = await web3.eth.getTransaction(transactionHash);
-            return transaction.blockNumber ? transaction.blockNumber : 0;
+
+            if (transaction.blockNumber) {
+                let currentBlockNumber = await web3.eth.getBlockNumber();
+
+                return currentBlockNumber - transaction.blockNumber + 1;
+            } else {
+                return 0;
+            }
         } catch (error) {
             return 0;
         }
@@ -243,16 +253,16 @@ module.exports = function SynCoinService(web3Address, walletCreationAccount, sho
         let events = await walletContract.getPastEvents('allEvents', {fromBlock: 0});
 
         // Map the obtained events into WalletTransaction objects
-        return events.map((event) => {
+        return Promise.all(events.map(async (event) => {
             let sent = (event.event == 'TransactionSent');
 
             return new WalletTransaction(
                 (sent ? event.returnValues.receiver : event.returnValues.sender),
                 (sent ? -event.returnValues.amount : event.returnValues.amount),
-                event.blockNumber, // TODO: eth.getBlock(blockNumber) -> time
+                await web3.eth.getBlock(event.blockNumber).timestamp,
                 event.transactionHash
             );
-        });
+        }));
     }
 
     /**
@@ -332,9 +342,9 @@ module.exports = function SynCoinService(web3Address, walletCreationAccount, sho
         });
 
         // Filter and map the obtained events into OrderStatuses
-        return events
+        return Promise.all(events
             .filter((event) => !reference || event.returnValues.reference == reference)
-            .map((event) => {
+            .map(async (event) => {
                 let status = OrderStatusUpdate.UNKNOWN;
 
                 switch (event.event) {
@@ -359,10 +369,10 @@ module.exports = function SynCoinService(web3Address, walletCreationAccount, sho
                     event.returnValues.reference,
                     status,
                     event.returnValues.amount ? event.returnValues.amount : null,
-                    event.blockNumber, // TODO: eth.getBlock(blockNumber) -> time
+                    await web3.eth.getBlock(event.blockNumber).timestamp,
                     event.transactionHash
                 );
-            });
+            }));
     }
 
     /**
@@ -419,7 +429,7 @@ module.exports = function SynCoinService(web3Address, walletCreationAccount, sho
      *
      * @param {string} ownerAddress
      * @param {Number} orderLifetime In seconds.
-     * @return {Promise|Contract}
+     * @return {Promise|string}
      */
     async function deployShopContract(ownerAddress, orderLifetime) {
         let walletCreationAddress = addAccountToInMemoryWallet(walletCreationAccount);
