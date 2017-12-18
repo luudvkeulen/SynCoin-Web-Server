@@ -16,7 +16,8 @@ const SynCoinService = require('./services/SynCoinService');
 const serviceInstance = SynCoinService(
     process.env.WEB3_ADDRESS,
     process.env.WALLET_CREATION_KEY,
-    process.env.SHOP_CONTRACT_ADDRESS
+    process.env.SHOP_CONTRACT_ADDRESS,
+    process.env.SYNCOIN_RATE
 );
 
 mongoose.Promise = global.Promise;

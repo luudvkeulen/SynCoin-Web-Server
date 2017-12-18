@@ -1,7 +1,7 @@
 const assert = require("assert");
 const SynCoinService = require("../services/SynCoinService");
 
-require('dotenv').config({ path: 'dev.env' });
+require('dotenv').config({ path: 'test.env' });
 
 // Set to true to log additional output
 const logging = false;
@@ -28,7 +28,8 @@ describe("SynCoinService", function () {
         service = SynCoinService(
             process.env.WEB3_ADDRESS,
             process.env.WALLET_CREATION_KEY,
-            process.env.SHOP_CONTRACT_ADDRESS
+            process.env.SHOP_CONTRACT_ADDRESS,
+            process.env.SYNCOIN_RATE
         );
     });
 
@@ -50,7 +51,7 @@ describe("SynCoinService", function () {
             });
 
             it("should fund the account with transaction money", async () => {
-                let balance = await service.getBalance(createWalletResult.encryptedAccount.address)
+                let balance = await service.getBalance(createWalletResult.encryptedAccount.address);
                 assert(balance > 0);
             });
         });
@@ -70,19 +71,25 @@ describe("SynCoinService", function () {
         let sendTransactionHash;
 
         describe("#sendTransaction", () => {
+            let transactionHash;
+
             it("should be able to send a transaction to a wallet", async () => {
                 log("Sending transaction...");
-                let transactionHash = await service.sendTransaction(userWalletAddress, encryptedUserAccount,
-                    "goodPassword", shopWalletAddress, 999);
+                transactionHash = await service.sendTransaction(userWalletAddress, encryptedUserAccount,
+                    "goodPassword", shopWalletAddress, 1);
 
                 assert(transactionHash);
                 log("TransactionHash: " + transactionHash);
             });
 
+            it("should wait for the transaction to be mined", async () => {
+                await service.waitForConfirmation(transactionHash);
+            });
+
             it("should be able to send a transaction from the shop wallet", async () => {
                 log("Sending transaction...");
                 let transactionHash = await service.sendTransaction(shopWalletAddress, encryptedShopAccount,
-                    "goodPassword", userWalletAddress, 999);
+                    "goodPassword", userWalletAddress, 1);
 
                 assert(transactionHash);
 
@@ -173,10 +180,10 @@ describe("SynCoinService", function () {
 
             it("should successfully create an order", async () => {
                 // Two orders, so that one can be canceled whereas the other can still be completed
-                orderRequest1 = service.getOrderRequest(orderReference1, 10);
+                orderRequest1 = service.getOrderRequest(orderReference1, 1);
                 order1TransactionHash = await service.sendTransactionRequest(userWalletAddress, encryptedUserAccount, "goodPassword", orderRequest1);
 
-                let orderRequest2 = service.getOrderRequest(orderReference2, 10);
+                let orderRequest2 = service.getOrderRequest(orderReference2, 1);
                 order2TransactionHash = await service.sendTransactionRequest(userWalletAddress, encryptedUserAccount, "goodPassword", orderRequest2);
             });
 
@@ -305,6 +312,18 @@ describe("SynCoinService", function () {
                 log("Balance after drain:", balanceAfter);
                 assert(balanceBefore < balanceAfter, 'Drain did not increase shop wallet balance.');
             })
+        });
+
+        describe("cleanup", () => {
+            it("return funds of completed order to the user", async () => {
+                log("Sending transaction...");
+                let transactionHash = await service.sendTransaction(shopWalletAddress, encryptedShopAccount,
+                    "goodPassword", userWalletAddress, 1);
+
+                assert(transactionHash);
+
+                log("TransactionHash: " + transactionHash);
+            });
         });
     });
 

@@ -2,7 +2,7 @@ class OrderStatusUpdate {
     /**
      * @param {string} reference
      * @param {string} status
-     * @param {Number} amount Set to 0 when only calling a transaction.
+     * @param {Number|string} amount Set to 0 when only calling a transaction.
      * @param {Number} time Block number.
      * @param {string} transactionHash
      */
