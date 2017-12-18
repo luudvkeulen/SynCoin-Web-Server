@@ -19,7 +19,21 @@ module.exports = function SynCoinService(web3Address, walletCreationAccount, sho
     let web3 = new Web3(web3Address);
     let nonces = {};
 
-    // TODO: Verify arguments
+    if (!web3Address) {
+        throw new Error("web3Address is not supplied to SynCoinService.");
+    }
+
+    if (!walletCreationAccount) {
+        throw new Error("walletCreationAccount is not supplied to SynCoinService.");
+    }
+
+    if (!shopContractAddress) {
+        throw new Error("shopContractAddress is not supplied to SynCoinService.");
+    }
+
+    if (!syncoinRate) {
+        throw new Error("syncoinRate is not supplied to SynCoinService.");
+    }
 
     /**
      * Converts SynCoin to wei.
