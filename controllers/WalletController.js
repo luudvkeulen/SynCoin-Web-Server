@@ -116,7 +116,6 @@ exports.createWallet = function (email, password, synCoinService) {
     });
 };
 
-<<<<<<< HEAD
 exports.getWalletAddress = function (req, res) {
     find(req.user.email).then((wallet) => {
         return res.status(200).send({address: wallet.walletAddress});
@@ -126,9 +125,6 @@ exports.getWalletAddress = function (req, res) {
 };
 
 find = function (email) {
-=======
-function find(email) {
->>>>>>> origin/master
     return new Promise((resolve, reject) => {
         Wallet.findOne({ email: email }, (err, wallet) => {
             if (err) reject(err);
