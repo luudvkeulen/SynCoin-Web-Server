@@ -1,7 +1,7 @@
 const User = require('./../schemas/user');
 
 const jwt = require('jsonwebtoken');
-const {passport, jwtOptions} = require('./../jwt-config');
+const { passport, jwtOptions } = require('./../jwt-config');
 
 const walletController = require('../controllers/WalletController');
 const userService = require('../services/UserService');
@@ -26,11 +26,11 @@ exports.login = function (req, res) {
 };
 
 exports.jwtTest = function (req, res) {
-    return res.json({message: 'Success! You can not see this without a token'});
+    return res.json({ message: 'Success! You can not see this without a token' });
 };
 
 exports.register = function (req, res) {
-    let user = req.body;
+    const user = req.body;
     if (!user.email || !user.password) {
         return res.sendStatus(500);
     }
@@ -43,23 +43,19 @@ exports.register = function (req, res) {
         user.company,
         user.address)
         .then(() => {
-                walletController
-                    .createWallet(user.email, user.password, req.synCoinService)
-                    .then(res.sendStatus(200))
-                    .catch((err) => {
-                            //userController.remove(user.email);
-                            return res.status(500).send(err);
-                        }
-                    );
-            }
-        )
-        .catch(error => {
+            walletController
+                .createWallet(user.email, user.password, req.synCoinService)
+                .then(() => res.sendStatus(200))
+                .catch((err) => {
+                    return res.status(500).send(err);
+                });
+        }).catch(error => {
             console.log("create user error " + error);
             return res.status(500).send(error)
         });
 };
 
-exports.findByEmail = function(email) {
+exports.findByEmail = function (email) {
     return new Promise((resolve, reject) => {
         User.findOne({ 'email': email }, (error, result) => {
             if (error) {
@@ -99,5 +95,5 @@ function create(email, name = '', lastname = '', phone = '', company = '', addre
 }
 
 function remove(email) {
-    User.remove({email: email});
+    User.remove({ email: email });
 }
