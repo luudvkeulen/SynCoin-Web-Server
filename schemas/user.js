@@ -7,7 +7,8 @@ const userSchema = new Schema({
     lastname: String,
     phone: String,
     company: String,
-    address: String
+    address: String,
+    isAdmin: Boolean
 });
 
 const User = mongoose.model('User', userSchema);

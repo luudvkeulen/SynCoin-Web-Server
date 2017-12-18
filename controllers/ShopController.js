@@ -6,14 +6,14 @@ const OrderService = require('./../services/OrderService');
 
 function findProductById(productId) {
     return new Promise((resolve, reject) => {
-        Product.findOne({ id: productId }, (error, result) => {
+        Product.findOne({id: productId}, (error, result) => {
             if (error) {
                 console.log(error);
-                reject({ message: `Error finding product with id: ${productId}` })
+                reject({message: `Error finding product with id: ${productId}`})
                 return;
             }
             if (!result) {
-                reject({ message: `No product found with id: ${productId}` })
+                reject({message: `No product found with id: ${productId}`})
                 return;
             }
             resolve(result);
@@ -58,13 +58,36 @@ module.exports.createOrder = async function (req, res) {
         const order = await OrderService.saveOrder(newOrder);
         const totalPrice = calculateTotalPrice(products);
         const orderRequest = req.synCoinService.getOrderRequest(order.reference, totalPrice);
-        res.status(200).json({ 
+        res.status(200).json({
             address: orderRequest.address,
-            amount: orderRequest.amount, 
+            amount: orderRequest.amount,
             data: orderRequest.data,
-            reference: order.reference, 
+            reference: order.reference,
         });
     } catch (error) {
         res.status(500).json(error);
     }
-}
+};
+
+module.exports.getAllOrders = async function (req, res) {
+    const user = req.user;
+    if (!user) return res.sendStatus(500);
+    if (!user.isAdmin) return res.sendStatus(401);
+
+    Order.find({}, (err, result) => {
+        if (err) {
+            console.log("find error");
+            return res.sendStatus(500);
+        }
+
+        console.log('result', result)
+
+        result.forEach(order => {
+            req.synCoinService.getOrderStatusUpdates(order._id).then((result) => {
+                console.log(result[result.length - 1]);
+            });
+        });
+
+        res.json(result);
+    });
+};
