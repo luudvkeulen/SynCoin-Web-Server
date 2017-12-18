@@ -13,6 +13,8 @@ router.get(prefix + '/balance', passport.authenticate('jwt', {session: false}), 
 
 router.get(prefix + '/tx', passport.authenticate('jwt', { session: false }), walletController.walletTransactions);
 
+router.get(prefix + '/address', passport.authenticate('jwt', { session: false }), walletController.getWalletAddress);
+
 router.get(prefix + '/verifypassword', passport.authenticate('jwt', { session: false }), walletController.verifyPassword);
 
 module.exports = router;
