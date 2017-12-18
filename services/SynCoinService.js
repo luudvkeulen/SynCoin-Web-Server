@@ -391,7 +391,7 @@ module.exports = function SynCoinService(web3Address, walletCreationAccount, sho
                 return new OrderStatusUpdate(
                     event.returnValues.reference,
                     status,
-                    weiToSyncoin(event.returnValues.amount ? event.returnValues.amount : null),
+                    event.returnValues.amount ? weiToSyncoin(event.returnValues.amount) : null,
                     await web3.eth.getBlock(event.blockNumber).timestamp,
                     event.transactionHash
                 );
