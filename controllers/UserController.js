@@ -97,3 +97,8 @@ function create(email, name = '', lastname = '', phone = '', company = '', addre
 function remove(email) {
     User.remove({ email: email });
 }
+
+exports.getUserData = function(req, res) {
+    console.log(req.user);
+    res.sendStatus(200);
+}

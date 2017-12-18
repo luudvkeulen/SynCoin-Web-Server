@@ -11,4 +11,6 @@ router.get('/jwtTest', passport.authenticate('jwt', { session: false }), userCon
 
 router.post('/user/register', userController.register);
 
+router.get('/user', passport.authenticate('jwt', { session: false }), userController.getUserData);
+
 module.exports = router;
