@@ -31,13 +31,7 @@ exports.jwtTest = function (req, res) {
 
 exports.register = function (req, res) {
     let user = req.body;
-    if (!user.email
-        || !user.name
-        || !user.lastname
-        || !user.phone
-        || !user.company
-        || !user.address
-        || !user.password) {
+    if (!user.email || !user.password) {
         return res.sendStatus(500);
     }
 
@@ -81,7 +75,7 @@ exports.findByEmail = function(email) {
     });
 }
 
-function create(email, name, lastname, phone, company, address) {
+function create(email, name = '', lastname = '', phone = '', company = '', address = '') {
     let newUser = new User({
         email: email,
         surname: name,
