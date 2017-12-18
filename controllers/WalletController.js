@@ -1,5 +1,6 @@
 const Wallet = require('./../schemas/wallet');
 const syncoinService = require("../services/SynCoinService");
+const walletService = require('../services/WalletService');
 
 exports.verifyPassword = function (req, res) {
     find(req.user.email).then((wallet) => {
@@ -16,7 +17,7 @@ exports.getBalance = function (req, res) {
         }, error => {
             return res.status(500).send(error);
         });
-    }).catch((reject) => {
+    }).catch((reject) => { 
         return res.status(500).send(reject)
     });
 };
@@ -31,14 +32,14 @@ exports.walletTransactions = function (req, res) {
 
 exports.sendTransaction = function (req, res) {
     find(req.user.email).then((wallet) => {
-        req.synCoinService.sendTransaction(wallet.walletAddress, wallet.encryptedAccount, req.query.password, req.synCoinService.sendTransactionRequest(req.query.walletAddress, req.query.encryptedAccount, req.query.password, req.query.transactionRequest)).then(value => {
+        req.synCoinService.sendTransaction(wallet.walletAddress, wallet.encryptedAccount, req.body.password, req.body.address, req.body.amount, req.body.data).then(value => {
             return res.status(200).send(value);
         }, error => {
             return res.status(500).send(error);
         });
 
-    }).catch((reject) => {
-        return res.status(500).send(reject)
+    }).catch((error) => { 
+        return res.status(500).send(error) 
     });
 };
 
@@ -49,9 +50,7 @@ exports.createOrder = function (req, res) {
         }, error => {
             return res.status(500).send(error);
         });
-    }).catch((reject) => {
-        return res.status(500).send(reject)
-    });
+    }).catch((reject) => { return res.status(500).send(reject) });
 };
 
 exports.cancelOrder = function (req, res) {
@@ -61,9 +60,7 @@ exports.cancelOrder = function (req, res) {
         }, error => {
             return res.status(500).send(error);
         });
-    }).catch((reject) => {
-        return res.status(500).send(reject)
-    });
+    }).catch((reject) => { return res.status(500).send(reject) });
 };
 
 exports.confirmReceived = function (req, res) {
@@ -73,9 +70,7 @@ exports.confirmReceived = function (req, res) {
         }, error => {
             return res.status(500).send(error);
         });
-    }).catch((reject) => {
-        return res.status(500).send(reject)
-    });
+    }).catch((reject) => { return res.status(500).send(reject) });
 };
 
 exports.confirmDelivering = function (req, res) {
@@ -85,9 +80,7 @@ exports.confirmDelivering = function (req, res) {
         }, error => {
             return res.status(500).send(error);
         });
-    }).catch((reject) => {
-        return res.status(500).send(reject)
-    });
+    }).catch((reject) => { return res.status(500).send(reject) });
 };
 
 exports.drainOrder = function (req, res) {
@@ -104,12 +97,11 @@ exports.drainOrder = function (req, res) {
 
 exports.createWallet = function (email, password, synCoinService) {
     return new Promise((resolve, reject) => {
-        synCoinService.createWallet(password).then((encryptedAccount, walletAddress) => {
-            console.log("walletAddress: " + walletAddress);
-            let newWallet = Wallet({
+        synCoinService.createWallet(password).then((result) => {
+            let newWallet = new Wallet({
                 email: email,
-                walletAddress: walletAddress,
-                encryptedAccount: encryptedAccount.encryptedAccount
+                walletAddress: result.walletAddress,
+                encryptedAccount: result.encryptedAccount
             });
 
             newWallet.save((err) => {
@@ -124,6 +116,7 @@ exports.createWallet = function (email, password, synCoinService) {
     });
 };
 
+<<<<<<< HEAD
 exports.getWalletAddress = function (req, res) {
     find(req.user.email).then((wallet) => {
         return res.status(200).send({address: wallet.walletAddress});
@@ -133,10 +126,13 @@ exports.getWalletAddress = function (req, res) {
 };
 
 find = function (email) {
+=======
+function find(email) {
+>>>>>>> origin/master
     return new Promise((resolve, reject) => {
-        Wallet.findOne({email: email}, (err, wallet) => {
+        Wallet.findOne({ email: email }, (err, wallet) => {
             if (err) reject(err);
             resolve(wallet);
         });
     });
-};
+}

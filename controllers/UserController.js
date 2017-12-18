@@ -82,7 +82,7 @@ exports.findByEmail = function(email) {
 }
 
 function create(email, name, lastname, phone, company, address) {
-    let newUser = User({
+    let newUser = new User({
         email: email,
         surname: name,
         lastname: lastname,

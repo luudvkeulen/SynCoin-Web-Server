@@ -57,12 +57,13 @@ module.exports.createOrder = async function (req, res) {
         });
         const order = await OrderService.saveOrder(newOrder);
         const totalPrice = calculateTotalPrice(products);
-        const orderRequest = req.synCoinService.getOrderRequest(order.reference, totalPrice);
+        const orderReference = order.reference.toString();
+        const orderRequest = req.synCoinService.getOrderRequest(orderReference, totalPrice);
         res.status(200).json({ 
             address: orderRequest.address,
             amount: orderRequest.amount, 
             data: orderRequest.data,
-            reference: order.reference, 
+            reference: orderReference 
         });
     } catch (error) {
         res.status(500).json(error);
