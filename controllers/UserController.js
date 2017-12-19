@@ -1,7 +1,7 @@
 const User = require('./../schemas/user');
 
 const jwt = require('jsonwebtoken');
-const {passport, jwtOptions} = require('./../jwt-config');
+const { passport, jwtOptions } = require('./../jwt-config');
 
 const walletController = require('../controllers/WalletController');
 const userService = require('../services/UserService');
@@ -26,18 +26,12 @@ exports.login = function (req, res) {
 };
 
 exports.jwtTest = function (req, res) {
-    return res.json({message: 'Success! You can not see this without a token'});
+    return res.json({ message: 'Success! You can not see this without a token' });
 };
 
 exports.register = function (req, res) {
-    let user = req.body;
-    if (!user.email
-        || !user.name
-        || !user.lastname
-        || !user.phone
-        || !user.company
-        || !user.address
-        || !user.password) {
+    const user = req.body;
+    if (!user.email || !user.password) {
         return res.sendStatus(500);
     }
 
@@ -49,23 +43,19 @@ exports.register = function (req, res) {
         user.company,
         user.address)
         .then(() => {
-                walletController
-                    .createWallet(user.email, user.password, req.synCoinService)
-                    .then(res.sendStatus(200))
-                    .catch((err) => {
-                            //userController.remove(user.email);
-                            return res.status(500).send(err);
-                        }
-                    );
-            }
-        )
-        .catch(error => {
+            walletController
+                .createWallet(user.email, user.password, req.synCoinService)
+                .then(() => res.sendStatus(200))
+                .catch((err) => {
+                    return res.status(500).send(err);
+                });
+        }).catch(error => {
             console.log("create user error " + error);
             return res.status(500).send(error)
         });
 };
 
-exports.findByEmail = function(email) {
+exports.findByEmail = function (email) {
     return new Promise((resolve, reject) => {
         User.findOne({ 'email': email }, (error, result) => {
             if (error) {
@@ -81,7 +71,7 @@ exports.findByEmail = function(email) {
     });
 }
 
-function create(email, name, lastname, phone, company, address) {
+function create(email, name = '', lastname = '', phone = '', company = '', address = '') {
     let newUser = new User({
         email: email,
         surname: name,
@@ -105,5 +95,31 @@ function create(email, name, lastname, phone, company, address) {
 }
 
 function remove(email) {
-    User.remove({email: email});
+    User.remove({ email: email });
+}
+
+exports.getUserData = async function(req, res) {
+    const userEmail = req.user.email;
+    try {
+        const accountData = await userService.getAccountData(userEmail);
+        res.json(accountData);
+    } catch (error) {
+        res.status(500).json(error);
+    }
+}
+
+exports.updateUserData = async function(req, res) {
+    const user = req.body;
+
+    if (!user.id || !user.email) {
+        const error = !user.id ? 'User ID is missing' : 'User e-mail is missing'
+        return res.status(500).json({ error });
+    }
+
+    try {
+        await userService.updateUserData(user);
+        res.sendStatus(200);
+    } catch (error) {
+        res.status(500).json(error);
+    }
 }

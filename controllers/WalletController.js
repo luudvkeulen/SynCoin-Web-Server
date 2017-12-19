@@ -11,7 +11,7 @@ exports.verifyPassword = function (req, res) {
 };
 
 exports.getBalance = function (req, res) {
-    find(req.user.email).then((wallet) => {
+    find(req.user.email).then(wallet => {
         req.synCoinService.getBalance(wallet.walletAddress).then(value => {
             return res.status(200).send(value);
         }, error => {
@@ -98,7 +98,7 @@ exports.drainOrder = function (req, res) {
 exports.createWallet = function (email, password, synCoinService) {
     return new Promise((resolve, reject) => {
         synCoinService.createWallet(password).then((result) => {
-            let newWallet = new Wallet({
+            const newWallet = new Wallet({
                 email: email,
                 walletAddress: result.walletAddress,
                 encryptedAccount: result.encryptedAccount
