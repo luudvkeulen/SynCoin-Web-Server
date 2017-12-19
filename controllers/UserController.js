@@ -98,7 +98,28 @@ function remove(email) {
     User.remove({ email: email });
 }
 
-exports.getUserData = function(req, res) {
-    console.log(req.user);
-    res.sendStatus(200);
+exports.getUserData = async function(req, res) {
+    const userEmail = req.user.email;
+    try {
+        const accountData = await userService.getAccountData(userEmail);
+        res.json(accountData);
+    } catch (error) {
+        res.status(500).json(error);
+    }
+}
+
+exports.updateUserData = async function(req, res) {
+    const user = req.body;
+
+    if (!user.id || !user.email) {
+        const error = !user.id ? 'User ID is missing' : 'User e-mail is missing'
+        return res.status(500).json({ error });
+    }
+
+    try {
+        await userService.updateUserData(user);
+        res.sendStatus(200);
+    } catch (error) {
+        res.status(500).json(error);
+    }
 }
