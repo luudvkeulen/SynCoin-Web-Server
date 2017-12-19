@@ -1,7 +1,7 @@
 class WalletTransaction {
     /**
      * @param {string} counterAddress
-     * @param {Number} amount
+     * @param {Number|string} amount
      * @param {Number} time Block number.
      * @param {string} transactionHash
      */
