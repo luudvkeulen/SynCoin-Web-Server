@@ -80,14 +80,30 @@ module.exports.getAllOrders = async function (req, res) {
             return res.sendStatus(500);
         }
 
-        console.log('result', result)
+        let promises = [];
 
-        result.forEach(order => {
-            req.synCoinService.getOrderStatusUpdates(order._id).then((result) => {
-                console.log(result[result.length - 1]);
-            });
+        for (let i = 0; i < result.length; i++) {
+            let order = result[i];
+            promises.push(req.synCoinService.getOrderStatusUpdates(order._id).then((statusresult) => {
+                //Convert from mongoose object to javascript object
+                result[i] = result[i].toObject();
+
+                if (!statusresult || statusresult.length === 0) {
+                    result[i]["status"] = "-";
+                    return result[i];
+                }
+
+                result[i]["status"] = capitalizeFirstLetter(statusresult[statusresult.length - 1].status);
+                return result[i];
+            }));
+        }
+
+        Promise.all(promises).then((results) => {
+            res.json(results);
         });
-
-        res.json(result);
     });
+
+    function capitalizeFirstLetter(string) {
+        return string.charAt(0).toUpperCase() + string.slice(1);
+    }
 };
