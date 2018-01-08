@@ -14,6 +14,8 @@ router.post('/shop/confirm-received', passport.authenticate('jwt', {session: fal
 
 router.get('/shop/orders', passport.authenticate('jwt', {session: false}), ShopController.getAllOrders);
 
+router.get('/shop/userorders', passport.authenticate('jwt', {session: false}), ShopController.getUserOrders);
+
 router.get('/shop/order/:reference', passport.authenticate('jwt', {session: false}), ShopController.getOrder);
 
 module.exports = router;

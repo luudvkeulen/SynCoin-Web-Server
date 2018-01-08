@@ -156,6 +156,39 @@ module.exports.getAllOrders = async function (req, res) {
     });
 };
 
+module.exports.getUserOrders = async function(req, res) {
+    const user = req.user;
+    if (!user) return res.sendStatus(500);
+    //"user.email":
+    Order.find({"user.email":user.email}, (err, result) => {
+        if (err) {
+            return res.sendStatus(500);
+        }
+
+        let promises = [];
+
+        for (let i = 0; i < result.length; i++) {
+            let order = result[i];
+            promises.push(req.synCoinService.getOrderStatusUpdates(order._id).then((statusresult) => {
+                //Convert from mongoose object to javascript object
+                result[i] = result[i].toObject();
+
+                if (!statusresult || statusresult.length === 0) {
+                    result[i]["status"] = "-";
+                    return result[i];
+                }
+
+                result[i]["status"] = capitalizeFirstLetter(statusresult[statusresult.length - 1].status);
+                return result[i];
+            }));
+        }
+
+        Promise.all(promises).then((results) => {
+            res.json(results);
+        });
+    });
+};
+
 module.exports.getOrder = async function (req, res) {
     let reference = req.params.reference;
     if (!reference || typeof reference !== 'string') {
