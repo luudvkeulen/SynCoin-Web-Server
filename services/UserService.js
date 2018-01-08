@@ -27,7 +27,8 @@ exports.getAccountData = function(email) {
                     lastname: user.lastname,
                     phone: user.phone,
                     company: user.company,
-                    address: user.address
+                    address: user.address,
+                    isAdmin: user.isAdmin
                 });
             })
             .catch(error => {

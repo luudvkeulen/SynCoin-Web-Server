@@ -42,6 +42,10 @@ function calculateTotalPrice(products) {
     }, 0)
 }
 
+function capitalizeFirstLetter(string) {
+    return string.charAt(0).toUpperCase() + string.slice(1);
+}
+
 module.exports.createOrder = async function (req, res) {
     const productIds = req.body.products || [];
     const created = new Date();
@@ -70,6 +74,54 @@ module.exports.createOrder = async function (req, res) {
     }
 };
 
+module.exports.confirmDelivering = async function (req, res) {
+    if (!req.user.isAdmin) {
+        return res.sendStatus(401);
+    }
+
+    let reference = req.body.reference;
+
+    if (!reference || typeof reference !== 'string') {
+        return res.status(400)
+            .json(new Error('Order reference invalid or not provided.'));
+    }
+
+    // Check if the order exists as a quick sanity check
+    try {
+        console.log(await Order.findOne({reference: reference}));
+    } catch (error) {
+        return res.status(400)
+            .json(new Error('Order with given reference does not exist.'));
+    }
+
+    return res.status(200)
+        .json(req.synCoinService.getConfirmDeliveringRequest(reference));
+};
+
+module.exports.confirmReceived = async function (req, res) {
+    if (!req.user) {
+        return res.sendStatus(401);
+    }
+
+    let reference = req.body.reference;
+
+    if (!reference || typeof reference !== 'string') {
+        return res.status(400)
+            .json(new Error('Order reference invalid or not provided.'));
+    }
+
+    // Check if the order exists as a quick sanity check
+    try {
+        console.log(await Order.findOne({reference: reference}));
+    } catch (error) {
+        return res.status(400)
+            .json(new Error('Order with given reference does not exist.'));
+    }
+
+    return res.status(200)
+        .json(req.synCoinService.getConfirmReceivedRequest(reference));
+};
+
 module.exports.getAllOrders = async function (req, res) {
     const user = req.user;
     if (!user) return res.sendStatus(500);
@@ -77,7 +129,6 @@ module.exports.getAllOrders = async function (req, res) {
 
     Order.find({}, (err, result) => {
         if (err) {
-            console.log("find error");
             return res.sendStatus(500);
         }
 
@@ -103,8 +154,29 @@ module.exports.getAllOrders = async function (req, res) {
             res.json(results);
         });
     });
+};
 
-    function capitalizeFirstLetter(string) {
-        return string.charAt(0).toUpperCase() + string.slice(1);
+module.exports.getOrder = async function (req, res) {
+    let reference = req.params.reference;
+    if (!reference || typeof reference !== 'string') {
+        return res.status(400).json({error: 'No or invalid order reference supplied.'});
+    }
+
+    try {
+        let order = await Order.findById(reference);
+
+        if (!req.user.isAdmin && req.user._id !== order.user._id) {
+            return res.status(401).json({error: 'You do not have access to retrieve this order.'});
+        }
+
+        return res.json({
+            created: order.created,
+            id: order._id,
+            user: order.user,
+            products: order.products,
+            statusUpdates: await req.synCoinService.getOrderStatusUpdates(reference)
+        });
+    } catch (error) {
+        return res.status(400).json({error: 'Order does not exist or could not be retrieved.'});
     }
 };
