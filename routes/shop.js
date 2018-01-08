@@ -12,6 +12,8 @@ router.post('/shop/confirm-delivering', passport.authenticate('jwt', {session: f
 
 router.post('/shop/confirm-received', passport.authenticate('jwt', {session: false}), ShopController.confirmReceived);
 
+router.post('/shop/cancel', passport.authenticate('jwt', {session: false}), ShopController.cancel);
+
 router.get('/shop/orders', passport.authenticate('jwt', {session: false}), ShopController.getAllOrders);
 
 router.get('/shop/order/:reference', passport.authenticate('jwt', {session: false}), ShopController.getOrder);

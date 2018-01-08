@@ -122,6 +122,30 @@ module.exports.confirmReceived = async function (req, res) {
         .json(req.synCoinService.getConfirmReceivedRequest(reference));
 };
 
+module.exports.cancel = async function (req, res) {
+    if (!req.user) {
+        return res.sendStatus(401);
+    }
+
+    let reference = req.body.reference;
+
+    if (!reference || typeof reference !== 'string') {
+        return res.status(400)
+            .json(new Error('Order reference invalid or not provided.'));
+    }
+
+    // Check if the order exists as a quick sanity check
+    try {
+        console.log(await Order.findOne({reference: reference}));
+    } catch (error) {
+        return res.status(400)
+            .json(new Error('Order with given reference does not exist.'));
+    }
+
+    return res.status(200)
+        .json(req.synCoinService.getCancelRequest(reference));
+};
+
 module.exports.getAllOrders = async function (req, res) {
     const user = req.user;
     if (!user) return res.sendStatus(500);
