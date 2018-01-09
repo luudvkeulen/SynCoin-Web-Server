@@ -124,6 +124,20 @@ exports.getWalletAddress = function (req, res) {
     });
 };
 
+exports.getUserTransactions = async function (req, res) {
+    if(!req.user) return res.sendStatus(500);
+    let walletAddress;
+    await find(req.user.email).then((wallet) => {
+        walletAddress = wallet.walletAddress;
+    }).catch((reject) => {
+        return res.sendStatus(500);
+    });
+    req.synCoinService.getWalletTransactions(walletAddress).then((result => {
+        console.log(result);
+        return res.json(result);
+    }));
+};
+
 find = function (email) {
     return new Promise((resolve, reject) => {
         Wallet.findOne({ email: email }, (err, wallet) => {

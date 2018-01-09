@@ -17,4 +17,6 @@ router.get(prefix + '/address', passport.authenticate('jwt', { session: false })
 
 router.get(prefix + '/verifypassword', passport.authenticate('jwt', { session: false }), walletController.verifyPassword);
 
+router.get(prefix + '/usertransactions', passport.authenticate('jwt', {session: false}), walletController.getUserTransactions);
+
 module.exports = router;
