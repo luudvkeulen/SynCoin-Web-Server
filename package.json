@@ -25,6 +25,7 @@
     "nodemon": "^1.12.1"
   },
   "scripts": {
-    "test": "mocha"
+    "test": "mocha",
+    "dev": "nodemon"
   }
 }
