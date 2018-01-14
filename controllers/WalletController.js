@@ -2,6 +2,8 @@ const Wallet = require('./../schemas/wallet');
 const syncoinService = require("../services/SynCoinService");
 const walletService = require('../services/WalletService');
 
+const { notifyOrderPaymentReceived } = require('./../sockets/socket-io');
+
 exports.verifyPassword = function (req, res) {
     find(req.user.email).then((wallet) => {
         return res.status(200).send(req.synCoinService.verifyPassword(wallet.encryptedAccount, req.query.password));
@@ -17,7 +19,7 @@ exports.getBalance = function (req, res) {
         }, error => {
             return res.status(500).send(error);
         });
-    }).catch((reject) => { 
+    }).catch((reject) => {
         return res.status(500).send(reject)
     });
 };
@@ -33,13 +35,18 @@ exports.walletTransactions = function (req, res) {
 exports.sendTransaction = function (req, res) {
     find(req.user.email).then((wallet) => {
         req.synCoinService.sendTransaction(wallet.walletAddress, wallet.encryptedAccount, req.body.password, req.body.address, req.body.amount, req.body.data).then(value => {
+            if (req.body.data && req.body.data !== '' && req.body.socketId && req.body.socketId !== '') {
+                notifyOrderPaymentReceived(req.body.socketId);
+                // if wrong method
+                // registerPaymentNotification(req.body.socketId, order reference / req.body.data);
+            }
             return res.status(200).send(value);
         }, error => {
             return res.status(500).send(error);
         });
 
-    }).catch((error) => { 
-        return res.status(500).send(error) 
+    }).catch((error) => {
+        return res.status(500).send(error)
     });
 };
 
