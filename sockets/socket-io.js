@@ -40,14 +40,15 @@ function createServer(server) {
 }
 
 function registerPaymentNotification(synCoinService, socketId, reference) {
+    notifyUser(socketId, 'user-sent-transaction', {});
     const periodicCheck = setInterval(() => {
         synCoinService.getOrderStatusUpdates(reference)
             .then(orderStatusUpdates => {
                 // Find a order status update with a status of 'CREATED'.
-                const createdOrderStatusUpdate = orderStatusUpdates.find(update => update.status === OrderStatusUpdate.CREATED);
-                if (createdOrderStatusUpdate) {
+                const orderCreated = orderStatusUpdates.find(update => update.status === OrderStatusUpdate.CREATED);
+                if (orderCreated) {
                     console.log('Order payment confirmed');
-                    notifyOrderPaymentReceived(socketId);
+                    notifyUser(socketId, 'payment-received', {});
                     clearInterval(periodicCheck);
                 }
             }).catch(error => console.log(error));
@@ -55,13 +56,16 @@ function registerPaymentNotification(synCoinService, socketId, reference) {
 }
 
 /**
- * Notifies connected users with the given e-mail address that an order payment has been received.
+ * /**
+ * Notifies a user of an event that occured and sends data back to the user.
  * @param {String} socketId The socketId of the user that is awaiting the payment of an order.
+ * @param {String} eventName The name of the event that occured.
+ * @param {object} data The data that should be sent back to the user.
  */
-function notifyOrderPaymentReceived(socketId) {
+function notifyUser(socketId, eventName, data) {
     const userSocket = io.of('/await-payment').connected[socketId];
     if (userSocket) {
-        userSocket.emit('payment-received', {});
+        userSocket.emit(eventName, data);
     } else {
         console.log('User socket not found, couldn\'t notify user');
     }
