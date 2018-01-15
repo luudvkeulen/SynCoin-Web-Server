@@ -46,6 +46,7 @@ function registerPaymentNotification(synCoinService, socketId, reference) {
                 // Find a order status update with a status of 'CREATED'.
                 const createdOrderStatusUpdate = orderStatusUpdates.find(update => update.status === OrderStatusUpdate.CREATED);
                 if (createdOrderStatusUpdate) {
+                    console.log('Order payment confirmed');
                     notifyOrderPaymentReceived(socketId);
                     clearInterval(periodicCheck);
                 }
