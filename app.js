@@ -3,6 +3,8 @@ const app = express();
 const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
 
+const httpServer = require('http').Server(app);
+
 const env = process.env.NODE_ENV || 'dev';
 
 require('dotenv').config({ path: env + '.env' });
@@ -24,6 +26,11 @@ mongoose.Promise = global.Promise;
 mongoose.connect(`mongodb://${process.env.DB_HOST}:${process.env.DB_PORT}/${process.env.DB_NAME}`, { useMongoClient: true, user: process.env.DB_USER, pass: process.env.DB_PASS })
     .then(() => console.log('MongoDB: connected'),
     error => console.log('MongoDB: error while connecting ', error));
+
+// Socket.IO initialization
+require('./sockets/socket-io').initialize({
+    httpServer: httpServer
+});
 
 // Middleware
 app.use(function (req, res, next) {
@@ -48,7 +55,7 @@ app.get('/', (req, res) => res.send("API is working."));
 app.use(function (req, res, next) {
     let err = new Error('Not Found');
     err.status = 404;
-    console.log('Érror 404 function');
+    console.log('Error 404 function');
     next(err);
 });
 
@@ -62,4 +69,4 @@ app.use(function (err, req, res, next) {
     res.sendStatus(err.status || 500);
 });
 
-app.listen(PORT, () => console.log(`Server: Listening on port ${PORT}`));
+httpServer.listen(PORT, () => console.log(`Server: Listening on port ${PORT}`));

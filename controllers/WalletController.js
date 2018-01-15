@@ -2,6 +2,8 @@ const Wallet = require('./../schemas/wallet');
 const syncoinService = require("../services/SynCoinService");
 const walletService = require('../services/WalletService');
 
+const { registerPaymentNotification } = require('./../sockets/socket-io');
+
 exports.verifyPassword = function (req, res) {
     find(req.user.email).then((wallet) => {
         return res.status(200).send(req.synCoinService.verifyPassword(wallet.encryptedAccount, req.query.password));
@@ -17,7 +19,7 @@ exports.getBalance = function (req, res) {
         }, error => {
             return res.status(500).send(error);
         });
-    }).catch((reject) => { 
+    }).catch((reject) => {
         return res.status(500).send(reject)
     });
 };
@@ -38,8 +40,25 @@ exports.sendTransaction = function (req, res) {
             return res.status(500).send(error);
         });
 
-    }).catch((error) => { 
-        return res.status(500).send(error) 
+    }).catch((error) => {
+        return res.status(500).send(error)
+    });
+};
+
+exports.payOrder = function (req, res) {
+    find(req.user.email).then((wallet) => {
+        req.synCoinService.sendTransaction(wallet.walletAddress, wallet.encryptedAccount, req.body.password, req.body.address, req.body.amount, req.body.data).then(value => {
+            const socketId = req.body.socketId;
+            const reference = req.body.reference;
+            registerPaymentNotification(req.synCoinService, socketId, reference);
+            return res.status(200).send(value);
+        }, error => {
+            console.log('error pay order', error);
+            return res.status(500).send(error);
+        });
+
+    }).catch((error) => {
+        return res.status(500).send(error)
     });
 };
 
@@ -118,14 +137,14 @@ exports.createWallet = function (email, password, synCoinService) {
 
 exports.getWalletAddress = function (req, res) {
     find(req.user.email).then((wallet) => {
-        return res.status(200).send({address: wallet.walletAddress});
+        return res.status(200).send({ address: wallet.walletAddress });
     }).catch((reject) => {
         return res.status(500).send(reject);
     });
 };
 
 exports.getUserTransactions = async function (req, res) {
-    if(!req.user) return res.sendStatus(500);
+    if (!req.user) return res.sendStatus(500);
     let walletAddress;
     await find(req.user.email).then((wallet) => {
         walletAddress = wallet.walletAddress;
