@@ -9,6 +9,8 @@ const prefix = '/wallet';
 
 router.post(prefix + '/tx', passport.authenticate('jwt', {session: false}), walletController.sendTransaction);
 
+router.post(`${prefix}/order`, passport.authenticate('jwt', {session: false}), walletController.payOrder);
+
 router.get(prefix + '/balance', passport.authenticate('jwt', {session: false}), walletController.getBalance);
 
 router.get(prefix + '/tx', passport.authenticate('jwt', { session: false }), walletController.walletTransactions);

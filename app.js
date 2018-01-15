@@ -28,7 +28,9 @@ mongoose.connect(`mongodb://${process.env.DB_HOST}:${process.env.DB_PORT}/${proc
     error => console.log('MongoDB: error while connecting ', error));
 
 // Socket.IO initialization
-require('./sockets/socket-io').createServer(httpServer);
+require('./sockets/socket-io').initialize({
+    httpServer: httpServer
+});
 
 // Middleware
 app.use(function (req, res, next) {

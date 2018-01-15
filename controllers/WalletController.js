@@ -2,7 +2,7 @@ const Wallet = require('./../schemas/wallet');
 const syncoinService = require("../services/SynCoinService");
 const walletService = require('../services/WalletService');
 
-const { notifyOrderPaymentReceived } = require('./../sockets/socket-io');
+const { registerPaymentNotification } = require('./../sockets/socket-io');
 
 exports.verifyPassword = function (req, res) {
     find(req.user.email).then((wallet) => {
@@ -35,13 +35,25 @@ exports.walletTransactions = function (req, res) {
 exports.sendTransaction = function (req, res) {
     find(req.user.email).then((wallet) => {
         req.synCoinService.sendTransaction(wallet.walletAddress, wallet.encryptedAccount, req.body.password, req.body.address, req.body.amount, req.body.data).then(value => {
-            if (req.body.data && req.body.data !== '' && req.body.socketId && req.body.socketId !== '') {
-                notifyOrderPaymentReceived(req.body.socketId);
-                // if wrong method
-                // registerPaymentNotification(req.body.socketId, order reference / req.body.data);
-            }
             return res.status(200).send(value);
         }, error => {
+            return res.status(500).send(error);
+        });
+
+    }).catch((error) => {
+        return res.status(500).send(error)
+    });
+};
+
+exports.payOrder = function (req, res) {
+    find(req.user.email).then((wallet) => {
+        req.synCoinService.sendTransaction(wallet.walletAddress, wallet.encryptedAccount, req.body.password, req.body.address, req.body.amount, req.body.data).then(value => {
+            const socketId = req.body.socketId;
+            const reference = req.body.reference;
+            registerPaymentNotification(req.synCoinService, socketId, reference);
+            return res.status(200).send(value);
+        }, error => {
+            console.log('error pay order', error);
             return res.status(500).send(error);
         });
 
@@ -125,14 +137,14 @@ exports.createWallet = function (email, password, synCoinService) {
 
 exports.getWalletAddress = function (req, res) {
     find(req.user.email).then((wallet) => {
-        return res.status(200).send({address: wallet.walletAddress});
+        return res.status(200).send({ address: wallet.walletAddress });
     }).catch((reject) => {
         return res.status(500).send(reject);
     });
 };
 
 exports.getUserTransactions = async function (req, res) {
-    if(!req.user) return res.sendStatus(500);
+    if (!req.user) return res.sendStatus(500);
     let walletAddress;
     await find(req.user.email).then((wallet) => {
         walletAddress = wallet.walletAddress;
