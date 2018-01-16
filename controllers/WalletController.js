@@ -152,7 +152,6 @@ exports.getUserTransactions = async function (req, res) {
         return res.sendStatus(500);
     });
     req.synCoinService.getWalletTransactions(walletAddress).then((result => {
-        console.log(result);
         return res.json(result);
     }));
 };
