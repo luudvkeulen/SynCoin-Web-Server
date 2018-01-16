@@ -10,7 +10,10 @@ const userSchema = new mongoose.Schema({
     phone: String,
     company: String,
     address: String,
-    isAdmin: Boolean
+    isAdmin: {
+        type: Boolean,
+        default: false
+    }
 });
 
 const User = mongoose.model('User', userSchema);

@@ -222,7 +222,7 @@ module.exports.getOrder = async function (req, res) {
     try {
         let order = await Order.findById(reference);
 
-        if (!req.user.isAdmin && req.user._id !== order.user._id) {
+        if (!req.user.isAdmin && !req.user._id.equals(order.user._id)) {
             return res.status(401).json({error: 'You do not have access to retrieve this order.'});
         }
 
